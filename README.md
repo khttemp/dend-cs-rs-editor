@@ -40,9 +40,9 @@ Issue に上げられたバグ情報が必ず修正されるものではない�
 
 2. メニュの「ファイルの開く」でBINファイルを開く。
 
-  Climax Stageは「TRAIN_DATA3RD.BIN」、Rising Stageは「TRAIN_DATA4TH.BIN」を開く。
+    Climax Stageは「TRAIN_DATA3RD.BIN」、Rising Stageは「TRAIN_DATA4TH.BIN」を開く。
 
-  必ず、プログラムが書込みできる場所で行ってください
+    必ず、プログラムが書込みできる場所で行ってください
 
 3. リストにある車両を選ぶ
 
