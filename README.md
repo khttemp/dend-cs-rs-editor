@@ -2,7 +2,7 @@
 
 ## 概要
 
-dend-cs-editor は、電車でD ClimaxStage, RisingStage の競技列車のパラメータを、GUI画面上で編集するソフトウェアである。
+dend-cs-rs-editor は、電車でD ClimaxStage, RisingStage の競技列車のパラメータを、GUI画面上で編集するソフトウェアである。
 
 ## 動作環境
 
