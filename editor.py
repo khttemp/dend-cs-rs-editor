@@ -676,7 +676,7 @@ def selectGame():
     v_edit.set("この車両を修正する")
         
 root = Tk()
-root.title("電車でD CS RS 性能改造")
+root.title("電車でD CS RS 性能改造 1.1.0")
 root.geometry("1024x768")
 
 menubar = Menu(root)
