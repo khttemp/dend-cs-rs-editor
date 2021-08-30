@@ -255,6 +255,87 @@ class hurikoWidget():
                 errorMsg = "予想外のエラーです"
                 mb.showerror(title="エラー", message=errorMsg)
 
+class allEdit(sd.Dialog):
+    def body(self, master):
+        self.eleLb = Label(master, text="要素", width=5, font=("", 14))
+        self.eleLb.grid(row=0, column=0, sticky=N+S, padx=3)
+        self.v_ele = StringVar()
+        self.eleCb = ttk.Combobox(master, textvariable=self.v_ele, width=24, value=perfName)
+        self.eleCb.grid(row=0, column=1, sticky=N+S, padx=3)
+        self.v_ele.set(perfName[0])
+
+        self.allLb = Label(master, text="を全部", width=5, font=("", 14))
+        self.allLb.grid(row=0, column=2, sticky=N+S, padx=3)
+
+        self.v_num = DoubleVar()
+        self.v_num.set(1.0)
+        self.numEt = Entry(master, textvariable=self.v_num, width=6, font=("", 14), justify="right")
+        self.numEt.grid(row=0, column=3, sticky=N+S, padx=3)
+        self.numLb = Label(master, text="倍にする", width=8, font=("", 14))
+        self.numLb.grid(row=0, column=4, sticky=N+S, padx=3)
+
+    def buttonbox(self):
+        box = Frame(self, padx=5, pady=5)
+        self.okBtn = Button(box, text="OK", width=10, command=self.allEdit)
+        self.okBtn.grid(row=0, column=0, padx=5)
+        self.cancelBtn = Button(box, text="Cancel", width=10, command=self.cancel)
+        self.cancelBtn.grid(row=0, column=1, padx=5)
+        box.pack()
+
+    def allEdit(self):
+        try:
+            result = float(self.v_num.get())
+            warnMsg = "全車両同じ倍率で変更され、すぐ保存されます。\nそれでもよろしいですか？"
+            result = mb.askokcancel(title="警告", message=warnMsg, icon="warning")
+            if result:
+                self.ok()
+                num = self.v_num.get()
+
+                for index in indexList:
+                    idx = index
+                    notchCnt = byteArr[index]
+                    idx += 1
+                    #speed
+                    for i in range(notchCnt):
+                        idx += 4
+                    #tlk
+                    for i in range(notchCnt):
+                        idx += 4
+                    #sound
+                    for i in range(notchCnt):
+                        idx += 1
+                    #add
+                    for i in range(notchCnt):
+                        idx += 4
+
+                    selectPerf = self.v_ele.get()
+                    perfIndex = perfName.index(selectPerf)
+                    idx = idx + 4*perfIndex
+
+                    originPerf = struct.unpack("<f", byteArr[idx:idx+4])[0]
+                    originPerf *= num
+
+                    perf = struct.pack("<f", originPerf)
+                    for n in perf:
+                        byteArr[idx] = n
+                        idx += 1
+
+                errorMsg = "保存に失敗しました。\nファイルが他のプログラムによって開かれている\nまたは権限問題の可能性があります"
+                try:
+                    w = open(file_path, "wb")
+                    w.write(byteArr)
+                    w.close()
+                    mb.showinfo(title="成功", message="全車両を改造しました")
+                    reloadFile()
+                except Exception as e:
+                    print(e)
+                    mb.showerror(title="保存エラー", message=errorMsg)
+                    
+        except:
+            errorMsg = "整数で入力してください。"
+            mb.showerror(title="整数エラー", message=errorMsg)
+        
+
 def openFile():
     global byteArr
     global file_path
@@ -453,6 +534,7 @@ def initSelect(value):
     cb['state'] = 'active'
 
     edit_button['state'] = 'active'
+    edit_all_button['state'] = 'active'
 
     speed = train[0]
     perf = train[1]
@@ -496,6 +578,11 @@ def editTrain():
     v_edit.set("保存する")
     edit_button["command"] = saveTrain
     cb['state'] = 'disabled'
+    edit_all_button['state'] = 'disabled'
+
+def editAllTrain():
+    global train
+    allEdit(root)
 
 def saveTrain():
     global v
@@ -505,6 +592,7 @@ def saveTrain():
     global byteArr
     v_edit.set("この車両を修正する")
     edit_button["command"] = editTrain
+    edit_all_button['state'] = 'active'
     cb['state'] = 'active'
     for btn in btnList:
         btn['state'] = 'disabled'
@@ -584,6 +672,7 @@ def selectGame():
     cb.set("")
     edit_button['command'] = editTrain
     edit_button['state'] = 'disabled'
+    edit_all_button['state'] = 'disabled'
     v_edit.set("この車両を修正する")
         
 root = Tk()
@@ -597,20 +686,25 @@ root.config(menu=menubar)
 v = StringVar()
 cb = ttk.Combobox(root, textvariable=v, width=10, state='disabled')
 cb.bind('<<ComboboxSelected>>', lambda e: selectTrain(v.get()))
-cb.place(relx=0.05, rely=0.05, relwidth=0.4, height=25)
+cb.place(relx=0.05, rely=0.02, relwidth=0.4, height=25)
 
 v_edit = StringVar()
 v_edit.set("この車両を修正する")
 edit_button = ttk.Button(root, textvariable=v_edit, command=editTrain, state='disabled')
-edit_button.place(relx = 0.48, rely=0.05, relwidth=0.2, height=25)
+edit_button.place(relx = 0.48, rely=0.02, relwidth=0.2, height=25)
+
+v_all_edit = StringVar()
+v_all_edit.set("同じ倍率で全部修正する")
+edit_all_button = ttk.Button(root, textvariable=v_all_edit, command=editAllTrain, state='disabled')
+edit_all_button.place(relx = 0.48, rely=0.07, relwidth=0.2, height=25)
 
 v_radio = IntVar()
 csRb = Radiobutton(root, text="Climax Stage", command = selectGame, variable=v_radio, value=0)
-csRb.place(relx=0.7, rely=0.05)
+csRb.place(relx=0.7, rely=0.02)
 
 rsRb = Radiobutton(root, text="Rising Stage", command = selectGame, variable=v_radio, value=1)
 rsRb.select()
-rsRb.place(relx=0.85, rely=0.05)
+rsRb.place(relx=0.85, rely=0.02)
 
 speedLf = ttk.LabelFrame(root, text="速度")
 speedLf.place(relx=0.05, rely=0.12, relwidth=0.38, relheight=0.8)
