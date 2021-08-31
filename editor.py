@@ -332,8 +332,8 @@ class allEdit(sd.Dialog):
                     mb.showerror(title="保存エラー", message=errorMsg)
                     
         except:
-            errorMsg = "整数で入力してください。"
-            mb.showerror(title="整数エラー", message=errorMsg)
+            errorMsg = "数字で入力してください。"
+            mb.showerror(title="数字エラー", message=errorMsg)
         
 
 def openFile():
@@ -531,10 +531,10 @@ def initSelect(value):
 
     cb['values'] = trainName
     v.set(trainName[0])
-    cb['state'] = 'active'
+    cb['state'] = 'readonly'
 
-    edit_button['state'] = 'active'
-    edit_all_button['state'] = 'active'
+    edit_button['state'] = 'normal'
+    edit_all_button['state'] = 'normal'
 
     speed = train[0]
     perf = train[1]
@@ -542,13 +542,17 @@ def initSelect(value):
     createWidget(speed, perf, huriko)
 
 def selectTrain(name):
-    global trainName
-    idx = trainName.index(name)
-    speed = train[3*idx]
-    perf = train[3*idx+1]
-    huriko = train[3*idx+2]
-    deleteWidget()
-    createWidget(speed, perf, huriko)
+    try:
+        global trainName
+        idx = trainName.index(name)
+        speed = train[3*idx]
+        perf = train[3*idx+1]
+        huriko = train[3*idx+2]
+        deleteWidget()
+        createWidget(speed, perf, huriko)
+    except:
+        errorMsg = "選択エラー！データが最新のものではない可能性があります。"
+        mb.showerror(title="選択エラー", message=errorMsg)
 
 def createWidget(speed, perf, huriko):
     global trainName
@@ -573,7 +577,7 @@ def createWidget(speed, perf, huriko):
 def editTrain():
     global btnList
     for btn in btnList:
-        btn['state'] = 'active'
+        btn['state'] = 'normal'
 
     v_edit.set("保存する")
     edit_button["command"] = saveTrain
@@ -592,8 +596,8 @@ def saveTrain():
     global byteArr
     v_edit.set("この車両を修正する")
     edit_button["command"] = editTrain
-    edit_all_button['state'] = 'active'
-    cb['state'] = 'active'
+    edit_all_button['state'] = 'normal'
+    cb['state'] = 'readonly'
     for btn in btnList:
         btn['state'] = 'disabled'
     idx = trainName.index(v.get())
@@ -676,7 +680,7 @@ def selectGame():
     v_edit.set("この車両を修正する")
         
 root = Tk()
-root.title("電車でD CS RS 性能改造 1.1.0")
+root.title("電車でD CS RS 性能改造 1.1.1")
 root.geometry("1024x768")
 
 menubar = Menu(root)
