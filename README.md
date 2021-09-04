@@ -142,5 +142,9 @@ pyinstaller か py2exe ライブラリをインストールする。 pip でも 
 
 dist フォルダーが作られて、 editor.exe が出力される。
 
+### Virustotal
+
+![virustotal](https://github.com/khttemp/dend-cs-rs-editor/blob/main/image/virustotal.png)
+
 
 以上。
