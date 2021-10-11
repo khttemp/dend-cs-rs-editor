@@ -286,7 +286,7 @@ class allEdit(sd.Dialog):
         try:
             result = float(self.v_num.get())
             warnMsg = "全車両同じ倍率で変更され、すぐ保存されます。\nそれでもよろしいですか？"
-            result = mb.askokcancel(title="警告", message=warnMsg, icon="warning")
+            result = mb.askokcancel(title="警告", message=warnMsg, icon="warning", parent=self)
             if result:
                 self.ok()
                 num = self.v_num.get()
@@ -325,15 +325,15 @@ class allEdit(sd.Dialog):
                     w = open(file_path, "wb")
                     w.write(byteArr)
                     w.close()
-                    mb.showinfo(title="成功", message="全車両を改造しました")
+                    mb.showinfo(title="成功", message="全車両を改造しました", parent=self)
                     reloadFile()
                 except Exception as e:
                     print(e)
-                    mb.showerror(title="保存エラー", message=errorMsg)
+                    mb.showerror(title="保存エラー", message=errorMsg, parent=self)
                     
         except:
             errorMsg = "数字で入力してください。"
-            mb.showerror(title="数字エラー", message=errorMsg)
+            mb.showerror(title="数字エラー", message=errorMsg, parent=self)
         
 
 def openFile():
@@ -680,7 +680,7 @@ def selectGame():
     v_edit.set("この車両を修正する")
         
 root = Tk()
-root.title("電車でD CS RS 性能改造 1.1.1")
+root.title("電車でD CS RS 性能改造 1.1.2")
 root.geometry("1024x768")
 
 menubar = Menu(root)
