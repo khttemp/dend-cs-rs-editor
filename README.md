@@ -42,7 +42,9 @@ Issue に上げられたバグ情報が必ず修正されるものではない�
 
     Lightning Stageは「TRAIN_DATA.BIN」   
 
-    Climax Stageは「TRAIN_DATA3RD.BIN」、Rising Stageは「TRAIN_DATA4TH.BIN」を開く。
+    Climax Stageは「TRAIN_DATA3RD.BIN」
+
+    Rising Stageは「TRAIN_DATA4TH.BIN」を開く。
 
     必ず、プログラムが書込みできる場所で行ってください
 

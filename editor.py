@@ -177,13 +177,16 @@ class hurikoWidget():
                 mb.showerror(title="エラー", message=errorMsg)
 
 class allEdit(sd.Dialog):
+    global decryptFile
+    global notchContentCnt
+    
     def body(self, master):
         self.eleLb = Label(master, text="要素", width=5, font=("", 14))
         self.eleLb.grid(row=0, column=0, sticky=N+S, padx=3)
         self.v_ele = StringVar()
-        self.eleCb = ttk.Combobox(master, textvariable=self.v_ele, width=24, value=perfName)
+        self.eleCb = ttk.Combobox(master, textvariable=self.v_ele, width=24, value=decryptFile.trainPerfNameList)
         self.eleCb.grid(row=0, column=1, sticky=N+S, padx=3)
-        self.v_ele.set(perfName[0])
+        self.v_ele.set(decryptFile.trainPerfNameList[0])
 
         self.allLb = Label(master, text="を全部", width=5, font=("", 14))
         self.allLb.grid(row=0, column=2, sticky=N+S, padx=3)
@@ -208,13 +211,15 @@ class allEdit(sd.Dialog):
             result = float(self.v_num.get())
             warnMsg = "全車両同じ倍率で変更され、すぐ保存されます。\nそれでもよろしいですか？"
             result = mb.askokcancel(title="警告", message=warnMsg, icon="warning", parent=self)
+            
             if result:
+                perfIndex = self.eleCb.current()
                 self.ok()
                 num = self.v_num.get()
 
-                for index in indexList:
+                for index in decryptFile.indexList:
                     idx = index
-                    notchCnt = byteArr[index]
+                    notchCnt = decryptFile.byteArr[index]
                     idx += 1
                     #speed
                     for i in range(notchCnt):
@@ -222,35 +227,31 @@ class allEdit(sd.Dialog):
                     #tlk
                     for i in range(notchCnt):
                         idx += 4
-                    #sound
-                    for i in range(notchCnt):
-                        idx += 1
-                    #add
-                    for i in range(notchCnt):
-                        idx += 4
+                    if notchContentCnt > 2:
+                        #sound
+                        for i in range(notchCnt):
+                            idx += 1
+                        #add
+                        for i in range(notchCnt):
+                            idx += 4
 
-                    selectPerf = self.v_ele.get()
-                    perfIndex = perfName.index(selectPerf)
                     idx = idx + 4*perfIndex
 
-                    originPerf = struct.unpack("<f", byteArr[idx:idx+4])[0]
+                    originPerf = struct.unpack("<f", decryptFile.byteArr[idx:idx+4])[0]
                     originPerf *= num
 
                     perf = struct.pack("<f", originPerf)
                     for n in perf:
-                        byteArr[idx] = n
+                        decryptFile.byteArr[idx] = n
                         idx += 1
 
                 errorMsg = "保存に失敗しました。\nファイルが他のプログラムによって開かれている\nまたは権限問題の可能性があります"
-                try:
-                    w = open(file_path, "wb")
-                    w.write(byteArr)
-                    w.close()
-                    mb.showinfo(title="成功", message="全車両を改造しました", parent=self)
+                if not decryptFile.saveTrain():
+                    decryptFile.printError()
+                    mb.showerror(title="保存エラー", message=errorMsg)
+                else:
+                    mb.showinfo(title="成功", message="全車両を改造しました")
                     reloadFile()
-                except Exception as e:
-                    print(e)
-                    mb.showerror(title="保存エラー", message=errorMsg, parent=self)
                     
         except:
             errorMsg = "数字で入力してください。"
