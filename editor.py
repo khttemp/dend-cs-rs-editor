@@ -7,106 +7,19 @@ from tkinter import filedialog as fd
 from tkinter import ttk
 from tkinter import messagebox as mb
 from tkinter import simpledialog as sd
+from dendDecrypt import LSdecrypt as dendLs
+from dendDecrypt import CSdecrypt as dendCs
+from dendDecrypt import RSdecrypt as dendRs
 
-train = []
-indexList = []
-trainName = []
+decryptFile = None
+notchContentCnt = 0
 varList = []
 btnList = []
-byteArr = []
-file_path = ""
 
-CSTrainName = [
-    "H2000",
-    "H2800",
-    "H8200",
-    "HS9000",
-    "KQ21XX",
-    "JR2000",
-    "Rapit",
-    
-    "Old_H2000",
-    "Old_H8200",
-    
-    "Arban21000R",
-    "K800",
-    "H7001",
-    "K8000",
-    "H8000",
-    "KQ2199",
-    "JR223",
-    "H2300",
-    "AE86",
-    "Deki3",
-    "K80"
-]
-
-RSTrainName = [
-    "H2000",
-    "Pano",
-    "H8200",
-    "Mu2000",
-    "T50000",
-    "T200",
-    "DRC",
-    
-    "X200",
-    "H4050",
-    "H7011",
-    "E233",
-    
-    "H2800",
-    "HS9000",
-    "KQ21XX",
-    "JR2000",
-    "Rapit",
-    "Arban21000R",
-    "K800",
-    "H7001",
-    "K8000",
-    "H8000",
-    "KQ2199",
-    "JR223",
-    "H2300",
-    "AE86",
-    "Deki3",
-    "K80"
-]
-
-perfName = [
-    "None_Tlk",
-    "Add_Best",
-    "UpHill",
-    "DownHill",
-    "Weight",
-    "First_break",
-    "【推測】Second_Breake",
-    "SpBreake",
-    "CompPower",
-    "D_Speed",
-    "【推測】One_Speed",
-    "OutParam",
-    "D_Add",
-    "D_Add2",
-    "【推測】D_AddFrame",
-    "未詳",
-    "Jump",
-    "ChangeFrame",
-    "OutRun_Top",
-    "OutRun_Other",
-    "OutRun_Frame",
-    "OutRun_Speed",
-    "OutRun_JumpFrame",
-    "OutRun_JumpHeight",
-    "LightningFullNotch_per",
-    "LightningFullNotch_Speed",
-    "LightningFullNotch_Frame"
-]
-
-hurikoName = [
-    "振り子の曲げる段階",
-    "振り子の曲げる角度(°)"
-]
+LS = 0
+BS = 1
+CS = 2
+RS = 3
 
 class Scrollbarframe():
     def __init__(self, parent):
@@ -127,54 +40,58 @@ class Scrollbarframe():
         self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
 class notchWidget():
+    global decryptFile
+    global notchContentCnt
+    
     def __init__(self, i, notchCnt, frame, speed):
         self.notchNum = "ノッチ" + str(i+1)
         self.notchNumLb = Label(frame, text=self.notchNum, font=("", 20), width=10, borderwidth=1, relief="solid")
-        self.notchNumLb.grid(rowspan=4, row=4*i, column=0, sticky=N+S)
+        self.notchNumLb.grid(rowspan=notchContentCnt, row=notchContentCnt*i, column=0, sticky=N+S)
 
         self.speedNameLb = Label(frame, text="speed", font=("", 20), width=5, borderwidth=1, relief="solid")
-        self.speedNameLb.grid(row=4*i, column=1, sticky=W+E)
+        self.speedNameLb.grid(row=notchContentCnt*i, column=1, sticky=W+E)
         self.varSpeed = DoubleVar()
         self.varSpeed.set(str(speed[i]))
         varList.append(self.varSpeed)
         self.speedLb = Label(frame, textvariable=self.varSpeed, font=("", 20), width=5, borderwidth=1, relief="solid")
-        self.speedLb.grid(row=4*i, column=2, sticky=W+E)
+        self.speedLb.grid(row=notchContentCnt*i, column=2, sticky=W+E)
         self.speedBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varSpeed, self.varSpeed.get()), state="disabled")
-        self.speedBtn.grid(row=4*i, column=3, sticky=W+E)
+        self.speedBtn.grid(row=notchContentCnt*i, column=3, sticky=W+E)
         btnList.append(self.speedBtn)
 
         self.tlkNameLb = Label(frame, text="tlk", font=("", 20), width=5, borderwidth=1, relief="solid")
-        self.tlkNameLb.grid(row=4*i+1, column=1, sticky=W+E)
+        self.tlkNameLb.grid(row=notchContentCnt*i+1, column=1, sticky=W+E)
         self.varTlk = DoubleVar()
         self.varTlk.set(str(speed[notchCnt + i]))
         varList.append(self.varTlk)
         self.tlkLb = Label(frame, textvariable=self.varTlk, font=("", 20), width=5, borderwidth=1, relief="solid")
-        self.tlkLb.grid(row=4*i+1, column=2, sticky=W+E)
+        self.tlkLb.grid(row=notchContentCnt*i+1, column=2, sticky=W+E)
         self.tlkBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varTlk, self.varTlk.get()), state="disabled")
-        self.tlkBtn.grid(row=4*i+1, column=3, sticky=W+E)
+        self.tlkBtn.grid(row=notchContentCnt*i+1, column=3, sticky=W+E)
         btnList.append(self.tlkBtn)
 
-        self.soundNameLb = Label(frame, text="sound", font=("", 20), width=5, borderwidth=1, relief="solid")
-        self.soundNameLb.grid(row=4*i+2, column=1, sticky=W+E)
-        self.varSound = IntVar()
-        self.varSound.set(str(speed[notchCnt*2 + i]))
-        varList.append(self.varSound)
-        self.soundLb = Label(frame, textvariable=self.varSound, font=("", 20), width=5, borderwidth=1, relief="solid")
-        self.soundLb.grid(row=4*i+2, column=2, sticky=W+E)
-        self.soundBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varSound, self.varSound.get(), True), state="disabled")
-        self.soundBtn.grid(row=4*i+2, column=3, sticky=W+E)
-        btnList.append(self.soundBtn)
-        
-        self.addNameLb = Label(frame, text="add", font=("", 20), width=5, borderwidth=1, relief="solid")
-        self.addNameLb.grid(row=4*i+3, column=1, sticky=W+E)
-        self.varAdd = DoubleVar()
-        self.varAdd.set(str(speed[notchCnt*3 + i]))
-        varList.append(self.varAdd)
-        self.addLb = Label(frame, textvariable=self.varAdd, font=("", 20), width=5, borderwidth=1, relief="solid")
-        self.addLb.grid(row=4*i+3, column=2, sticky=W+E)
-        self.addBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varAdd, self.varAdd.get()), state="disabled")
-        self.addBtn.grid(row=4*i+3, column=3, sticky=W+E)
-        btnList.append(self.addBtn)
+        if notchContentCnt > 2:
+            self.soundNameLb = Label(frame, text="sound", font=("", 20), width=5, borderwidth=1, relief="solid")
+            self.soundNameLb.grid(row=notchContentCnt*i+2, column=1, sticky=W+E)
+            self.varSound = IntVar()
+            self.varSound.set(str(speed[notchCnt*2 + i]))
+            varList.append(self.varSound)
+            self.soundLb = Label(frame, textvariable=self.varSound, font=("", 20), width=5, borderwidth=1, relief="solid")
+            self.soundLb.grid(row=notchContentCnt*i+2, column=2, sticky=W+E)
+            self.soundBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varSound, self.varSound.get(), True), state="disabled")
+            self.soundBtn.grid(row=notchContentCnt*i+2, column=3, sticky=W+E)
+            btnList.append(self.soundBtn)
+            
+            self.addNameLb = Label(frame, text="add", font=("", 20), width=5, borderwidth=1, relief="solid")
+            self.addNameLb.grid(row=notchContentCnt*i+3, column=1, sticky=W+E)
+            self.varAdd = DoubleVar()
+            self.varAdd.set(str(speed[notchCnt*3 + i]))
+            varList.append(self.varAdd)
+            self.addLb = Label(frame, textvariable=self.varAdd, font=("", 20), width=5, borderwidth=1, relief="solid")
+            self.addLb.grid(row=notchContentCnt*i+3, column=2, sticky=W+E)
+            self.addBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varAdd, self.varAdd.get()), state="disabled")
+            self.addBtn.grid(row=notchContentCnt*i+3, column=3, sticky=W+E)
+            btnList.append(self.addBtn)
 
     def editVar(self, var, value, flag = False):
         result = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=value)
@@ -200,8 +117,10 @@ class notchWidget():
                 mb.showerror(title="エラー", message=errorMsg)
 
 class perfWidget():
+    global decryptFile
+    
     def __init__(self, i, frame, perf):
-        self.perfNameLb = Label(frame, text=perfName[i], font=("", 20), width=24, borderwidth=1, relief="solid")
+        self.perfNameLb = Label(frame, text=decryptFile.trainPerfNameList[i], font=("", 20), width=24, borderwidth=1, relief="solid")
         self.perfNameLb.grid(row=i, column=0, sticky=W+E)
         self.varPerf = DoubleVar()
         self.varPerf.set(str(perf[i]))
@@ -228,8 +147,10 @@ class perfWidget():
                 mb.showerror(title="エラー", message=errorMsg)
 
 class hurikoWidget():
+    global decryptFile
+    
     def __init__(self, i, perfCnt, frame, huriko):
-        self.hurikoNameLb = Label(frame, text=hurikoName[i], font=("", 20), width=24, borderwidth=1, relief="solid")
+        self.hurikoNameLb = Label(frame, text=decryptFile.trainHurikoNameList[i], font=("", 20), width=24, borderwidth=1, relief="solid")
         self.hurikoNameLb.grid(row=perfCnt+i, column=0, sticky=W+E)
         self.varHuriko = IntVar()
         self.varHuriko.set(str(huriko[i]))
@@ -337,217 +258,71 @@ class allEdit(sd.Dialog):
         
 
 def openFile():
-    global byteArr
-    global file_path
-    if v_radio.get() == 0:
+    global decryptFile
+    global notchContentCnt
+
+    if v_radio.get() == LS:
+        file_path = fd.askopenfilename(filetypes=[("TRAIN_DATA", "TRAIN_DATA.BIN")])
+        if file_path:
+            del decryptFile
+            decryptFile = None
+            notchContentCnt = 2
+            decryptFile = dendLs.LSdecrypt(file_path)
+    elif v_radio.get() == CS:
         file_path = fd.askopenfilename(filetypes=[("TRAIN_DATA", "TRAIN_DATA3RD.BIN")])
-    elif v_radio.get() == 1:
+        if file_path:
+            del decryptFile
+            decryptFile = None
+            notchContentCnt = 4
+            decryptFile = dendCs.CSdecrypt(file_path)
+    elif v_radio.get() == RS:
         file_path = fd.askopenfilename(filetypes=[("TRAIN_DATA", "TRAIN_DATA4TH.BIN")])
+        if file_path:
+            del decryptFile
+            decryptFile = None
+            notchContentCnt = 4
+            decryptFile = dendRs.RSdecrypt(file_path)
 
     errorMsg = "予想外のエラーが出ました。\n電車でDのファイルではない、またはファイルが壊れた可能性があります。"
-    if file_path:
-        try:
-            file = open(file_path, "rb")
-            line = file.read()
-            byteArr = bytearray(line)
-            try:
-                deleteWidget()
-            except:
-                mb.showerror(title="エラー", message=errorMsg)
-            decryptDend(line, v_radio.get())
-            file.close()
-            initSelect(v_radio.get())
-        except Exception as e:
-            print(e)
+    if file_path:        
+        if not decryptFile.open():
+            decryptFile.printError()
             mb.showerror(title="エラー", message=errorMsg)
-
-def decryptDend(line, value):
-    global train
-    global indexList
-    train = []
-    indexList = []
-    index = 0
-    trainCnt = line[index]
-    index += 1
-
-    ######
-    if value == 0:
-        #[S300], [Yokohama], [S500]のデータは使わない
-        trainCnt -= 3
-    elif value == 1:
-        #[Yuri], [S300]のデータは使わない
-        trainCnt -= 2
-    ######
-
-    for i in range(trainCnt):
-        indexList.append(index)
-        train_speed = []
-        notchCnt = line[index]
-        index += 1
-        for j in range(4):
-            if j == 2:
-                for k in range(notchCnt):
-                    train_speed.append(line[index])
-                    index += 1
-            else:
-                for k in range(notchCnt):
-                    speed = struct.unpack("<f", line[index:index+4])[0]
-                    speed = round(speed, 4)
-                    train_speed.append(speed)
-                    index += 4
-        train.append(train_speed)
-
-        train_perf = []
-        for j in range(27):
-            perf = struct.unpack("<f", line[index:index+4])[0]
-            perf = round(perf, 4)
-            train_perf.append(perf)
-            index += 4
-        train.append(train_perf)
+            return
         
-        train_huriko = []
-        for j in range(2):
-            train_huriko.append(line[index])
-            index += 1
-        train.append(train_huriko)
-        
-        smfCnt = line[index]
-        index += 1
-        for j in range(smfCnt):
-            b = line[index]
-            index += 1
-            index += b
-
-        mdlCnt = line[index]
-        index += 1
-
-        mdlSmfCnt = line[index]
-        index += 1
-        for j in range(mdlSmfCnt):
-            b = line[index]
-            index += 1
-            index += b
-
-        ######
-        if value == 0:
-            for j in range(mdlSmfCnt):
-                b = line[index]
-                index += 1
-                index += b
-        elif value == 1:
-            colCnt = line[index]
-            index += 1
-            for j in range(colCnt):
-                b = line[index]
-                index += 1
-                index += b
-        ######
-
-        pantaCnt = line[index]
-        index += 1
-        for j in range(pantaCnt):
-            b = line[index]
-            index += 1
-            index += b
-        for j in range(4):
-            b = line[index]
-            index += 1
-            index += b
-
-        #mdlList
-        for j in range(mdlCnt):
-            index += 1
-        #pantaList
-        pantaList = []
-        for j in range(mdlCnt):
-            pantaList.append(line[index])
-            index += 1
-
-        ######
-        if value == 1:
-            #colList
-            for j in range(mdlCnt):
-                index += 1
-        ######
-            
-        ###
-        for j in range(5):
-            b = line[index]
-            index += 1
-            index += b
-        ###
-        cnta = line[index]
-        index += 1
-        b = line[index]
-        index += 1
-        index += b
-        ###
-        cntb = line[index]
-        index += 1
-        b = line[index]
-        index += 1
-        index += b
-        ###
-
-        lensCnt = line[index]
-        index += 1
-        for j in range(lensCnt):
-            b = line[index]
-            index += 1
-            index += b
-
-            b = line[index]
-            index += 1
-            index += b
-
-            index += 0xC
-        ###
-        tailCnt = line[index]
-        index += 1
-        for j in range(tailCnt):
-            b = line[index]
-            index += 1
-            index += b
-        ###
-        index += 2
-        ###
-        for j in range(2):
-            b = line[index]
-            index += 1
-            index += b
-            b = line[index]
-            index += 1
-            index += b
-            index += 0xC
+        deleteWidget()
+        initSelect(v_radio.get())
 
 def initSelect(value):
-    global train
-    global trainName
-
-    if value == 0:
-        trainName = CSTrainName
-    elif value == 1:
-        trainName = RSTrainName
-
-    cb['values'] = trainName
-    v.set(trainName[0])
+    global decryptFile
+    
+    cb['values'] = decryptFile.trainNameList
+    v.set(decryptFile.trainNameList[0])
     cb['state'] = 'readonly'
 
     edit_button['state'] = 'normal'
     edit_all_button['state'] = 'normal'
 
-    speed = train[0]
-    perf = train[1]
-    huriko = train[2]
+    speed = decryptFile.trainInfoList[0]
+    perf = decryptFile.trainInfoList[1]
+    if decryptFile.trainHurikoNameList != "":
+        huriko = decryptFile.trainInfoList[2]
+    else:
+        huriko = ""
     createWidget(speed, perf, huriko)
 
 def selectTrain(name):
+    global decryptFile
     try:
-        global trainName
-        idx = trainName.index(name)
-        speed = train[3*idx]
-        perf = train[3*idx+1]
-        huriko = train[3*idx+2]
+        idx = decryptFile.trainNameList.index(name)
+        if decryptFile.trainHurikoNameList != "":
+            speed = decryptFile.trainInfoList[3*idx]
+            perf = decryptFile.trainInfoList[3*idx+1]
+            huriko = decryptFile.trainInfoList[3*idx+2]
+        else:
+            speed = decryptFile.trainInfoList[2*idx]
+            perf = decryptFile.trainInfoList[2*idx+1]
+            huriko = ""
         deleteWidget()
         createWidget(speed, perf, huriko)
     except:
@@ -555,14 +330,16 @@ def selectTrain(name):
         mb.showerror(title="選択エラー", message=errorMsg)
 
 def createWidget(speed, perf, huriko):
-    global trainName
+    global decryptFile
+    global notchContentCnt
     global varList
     global btnList
+    
     width = speedLf.winfo_width()
     height = speedLf.winfo_height()
     frame = Scrollbarframe(speedLf)
 
-    notchCnt = len(speed)//4
+    notchCnt = len(speed)//notchContentCnt
     for i in range(notchCnt):
         notchWidget(i, notchCnt, frame.frame, speed)
 
@@ -571,8 +348,9 @@ def createWidget(speed, perf, huriko):
     for i in range(perfCnt):
         perfWidget(i, frame2.frame, perf)
 
-    for i in range(len(huriko)):
-        hurikoWidget(i, perfCnt, frame2.frame, huriko)
+    if huriko != "":
+        for i in range(len(huriko)):
+            hurikoWidget(i, perfCnt, frame2.frame, huriko)
 
 def editTrain():
     global btnList
@@ -593,81 +371,92 @@ def saveTrain():
     global v_edit
     global varList
     global btnList
-    global byteArr
+    global decryptFile
+    global notchContentCnt
+    
     v_edit.set("この車両を修正する")
     edit_button["command"] = editTrain
     edit_all_button['state'] = 'normal'
     cb['state'] = 'readonly'
     for btn in btnList:
         btn['state'] = 'disabled'
-    idx = trainName.index(v.get())
-    index = indexList[idx]
+    idx = decryptFile.trainNameList.index(v.get())
+    index = decryptFile.indexList[idx]
 
-    notchCnt = byteArr[index]
+    notchCnt = decryptFile.byteArr[index]
     index += 1
     for i in range(notchCnt):
-        speed = struct.pack("<f", varList[4*i].get())
+        speed = struct.pack("<f", varList[notchContentCnt*i].get())
         for n in speed:
-            byteArr[index] = n
+            decryptFile.byteArr[index] = n
             index += 1
     for i in range(notchCnt):
-        tlk = struct.pack("<f", varList[4*i+1].get())
+        tlk = struct.pack("<f", varList[notchContentCnt*i+1].get())
         for n in tlk:
-            byteArr[index] = n
+            decryptFile.byteArr[index] = n
             index += 1
-    for i in range(notchCnt):
-        sound = struct.pack("<c", varList[4*i+2].get().to_bytes(1, 'big'))
-        for n in sound:
-            byteArr[index] = n
-            index += 1
-    for i in range(notchCnt):
-        add = struct.pack("<f", varList[4*i+3].get())
-        for n in add:
-            byteArr[index] = n
-            index += 1
+    if notchContentCnt > 2:
+        for i in range(notchCnt):
+            sound = struct.pack("<c", varList[notchContentCnt*i+2].get().to_bytes(1, 'big'))
+            for n in sound:
+                decryptFile.byteArr[index] = n
+                index += 1
+        for i in range(notchCnt):
+            add = struct.pack("<f", varList[notchContentCnt*i+3].get())
+            for n in add:
+                decryptFile.byteArr[index] = n
+                index += 1
 
-    perfCnt = len(perfName)
+    perfCnt = len(decryptFile.trainPerfNameList)
     for i in range(perfCnt):
-        perf = struct.pack("<f", varList[notchCnt*4+i].get())
+        perf = struct.pack("<f", varList[notchCnt*notchContentCnt+i].get())
         for n in perf:
-            byteArr[index] = n
+            decryptFile.byteArr[index] = n
             index += 1
-    for i in range(2):
-        huriko = struct.pack("<c", varList[notchCnt*4+perfCnt+i].get().to_bytes(1, 'big'))
-        for n in huriko:
-            byteArr[index] = n
-            index += 1
+            
+    if decryptFile.trainHurikoNameList != "":
+        for i in range(2):
+            huriko = struct.pack("<c", varList[notchCnt*notchContentCnt+perfCnt+i].get().to_bytes(1, 'big'))
+            for n in huriko:
+                decryptFile.byteArr[index] = n
+                index += 1
 
     errorMsg = "保存に失敗しました。\nファイルが他のプログラムによって開かれている\nまたは権限問題の可能性があります"
-    try:
-        w = open(file_path, "wb")
-        w.write(byteArr)
-        w.close()
+    if not decryptFile.saveTrain():
+        decryptFile.printError()
+        mb.showerror(title="保存エラー", message=errorMsg)
+    else:
         mb.showinfo(title="成功", message="車両を改造しました")
         reloadFile()
-    except Exception as e:
-        print(e)
-        mb.showerror(title="保存エラー", message=errorMsg)
 
 def reloadFile():
-    global byteArr
-    global file_path
+    global v
+    global decryptFile
+
     errorMsg = "予想外のエラーが出ました。\n電車でDのファイルではない、またはファイルが壊れた可能性があります。"
-    if file_path:
-        try:
-            file = open(file_path, "rb")
-            line = file.read()
-            byteArr = bytearray(line)
-            try:
-                deleteWidget()
-            except:
-                mb.showerror(title="エラー", message=errorMsg)
-            decryptDend(line, v_radio.get())
-            file.close()
-            selectTrain(v.get())
-        except Exception as e:
-            print(e)
-            mb.showerror(title="エラー", message=errorMsg)
+    if not decryptFile.open():
+        decryptFile.printError()
+        mb.showerror(title="エラー", message=errorMsg)
+        return
+    
+    deleteWidget()
+    selectTrain(v.get())
+
+def deleteWidget():
+    global speedLf
+    global perfLf
+    global varList
+    global btnList
+    children = speedLf.winfo_children()
+    for child in children:
+        child.destroy()
+
+    children = perfLf.winfo_children()
+    for child in children:
+        child.destroy()
+    varList = []
+    btnList = []
+    v_edit.set("この車両を修正する")
 
 def selectGame():
     deleteWidget()
@@ -680,7 +469,7 @@ def selectGame():
     v_edit.set("この車両を修正する")
         
 root = Tk()
-root.title("電車でD CS RS 性能改造 1.1.2")
+root.title("電車でD LS CS RS 性能改造 1.2.0")
 root.geometry("1024x768")
 
 menubar = Menu(root)
@@ -703,33 +492,21 @@ edit_all_button = ttk.Button(root, textvariable=v_all_edit, command=editAllTrain
 edit_all_button.place(relx = 0.48, rely=0.07, relwidth=0.2, height=25)
 
 v_radio = IntVar()
-csRb = Radiobutton(root, text="Climax Stage", command = selectGame, variable=v_radio, value=0)
-csRb.place(relx=0.7, rely=0.02)
 
-rsRb = Radiobutton(root, text="Rising Stage", command = selectGame, variable=v_radio, value=1)
+lsRb = Radiobutton(root, text="Lightning Stage", command = selectGame, variable=v_radio, value=0)
+lsRb.place(relx=0.7, rely=0.02)
+
+csRb = Radiobutton(root, text="Climax Stage", command = selectGame, variable=v_radio, value=2)
+csRb.place(relx=0.7, rely=0.07)
+
+rsRb = Radiobutton(root, text="Rising Stage", command = selectGame, variable=v_radio, value=3)
 rsRb.select()
-rsRb.place(relx=0.85, rely=0.02)
+rsRb.place(relx=0.85, rely=0.07)
 
 speedLf = ttk.LabelFrame(root, text="速度")
 speedLf.place(relx=0.05, rely=0.12, relwidth=0.38, relheight=0.8)
 
 perfLf = ttk.LabelFrame(root, text="性能")
 perfLf.place(relx=0.45, rely=0.12, relwidth=0.52, relheight=0.8)
-
-def deleteWidget():
-    global speedLf
-    global perfLf
-    global varList
-    global btnList
-    children = speedLf.winfo_children()
-    for child in children:
-        child.destroy()
-
-    children = perfLf.winfo_children()
-    for child in children:
-        child.destroy()
-    varList = []
-    btnList = []
-    v_edit.set("この車両を修正する")
 
 root.mainloop()
