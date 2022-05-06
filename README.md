@@ -1,8 +1,8 @@
-# dend-cs-rs-editor
+# dend-ls-cs-rs-editor
 
 ## 概要
 
-dend-cs-rs-editor は、電車でD ClimaxStage, RisingStage の競技列車のパラメータを、GUI画面上で編集するソフトウェアである。
+dend-ls-cs-rs-editor は、電車でD LightningStage、ClimaxStage、RisingStage の競技列車のパラメータを、GUI画面上で編集するソフトウェアである。
 
 ## 動作環境
 
@@ -34,11 +34,13 @@ Issue に上げられたバグ情報が必ず修正されるものではない�
 
 ## 実行方法
 
-![title](https://github.com/khttemp/dend-cs-rs-editor/blob/main/image/title.png)
+![title](https://github.com/khttemp/dend-ls-cs-rs-editor/blob/main/image/title.png)
 
 1. ラジオボタンで、ゲームを選ぶ。初期状態は「Rising Stage」になっている。
 
 2. メニュの「ファイルの開く」でBINファイルを開く。
+
+    Lightning Stageは「TRAIN_DATA.BIN」   
 
     Climax Stageは「TRAIN_DATA3RD.BIN」、Rising Stageは「TRAIN_DATA4TH.BIN」を開く。
 
@@ -102,11 +104,13 @@ Windows であれば以下のコマンドを入力する。
   ````
 
 
-* Q. 電車でD ClimaxStage なのに、 TRAIN_DATA3RD.BIN が無い。
-
-  または、電車でD RisingStage なのに、TRAIN_DATA4TH.BIN がない。  
+* Q. 電車でDのゲームがあるが、指定したBINファイルがない。  
   
-  * A. Climax StageはPatch004.Pack、Rising StageはPatch_4th_4を
+  * A. Lightning StageはDenD_Data102.Pack、
+
+    Climax StageはPatch004.Pack、
+
+    Rising StageはPatch_4th_4を
 
     GARbro のような、アーカイバで展開すると得られる。
   * A. GARbro を使用して空パスワードで解凍すると無効なファイルになるので、適切なパスワードを入力すること。
@@ -144,7 +148,7 @@ dist フォルダーが作られて、 editor.exe が出力される。
 
 ### Virustotal
 
-![virustotal](https://github.com/khttemp/dend-cs-rs-editor/blob/main/image/virustotal.png)
+![virustotal](https://github.com/khttemp/dend-ls-cs-rs-editor/blob/main/image/virustotal.png)
 
 
 以上。
