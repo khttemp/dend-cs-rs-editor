@@ -1,8 +1,8 @@
-# dend-ls-cs-rs-editor
+# dend-lbcr-editor
 
 ## 概要
 
-dend-ls-cs-rs-editor は、電車でD LightningStage、ClimaxStage、RisingStage の競技列車のパラメータを、GUI画面上で編集するソフトウェアである。
+dend-lbcr-editor は、電車でD LightningStage、BurningStage、ClimaxStage、RisingStage の競技列車のパラメータを、GUI画面上で編集するソフトウェアである。
 
 ## 動作環境
 
@@ -34,13 +34,15 @@ Issue に上げられたバグ情報が必ず修正されるものではない�
 
 ## 実行方法
 
-![title](https://github.com/khttemp/dend-ls-cs-rs-editor/blob/main/image/title.png)
+![title](https://github.com/khttemp/dend-lbcr-editor/blob/main/image/title.png)
 
 1. ラジオボタンで、ゲームを選ぶ。初期状態は「Rising Stage」になっている。
 
 2. メニュの「ファイルの開く」でBINファイルを開く。
 
-    Lightning Stageは「TRAIN_DATA.BIN」   
+    Lightning Stageは「TRAIN_DATA.BIN」
+
+    Burning Stageは「TRAIN_DATA2ND.BIN」
 
     Climax Stageは「TRAIN_DATA3RD.BIN」
 
@@ -110,6 +112,8 @@ Windows であれば以下のコマンドを入力する。
   
   * A. Lightning StageはDenD_Data102.Pack、
 
+    Burning StageはPach006_ALL.Pack、
+
     Climax StageはPatch004.Pack、
 
     Rising StageはPatch_4th_4を
@@ -150,7 +154,7 @@ dist フォルダーが作られて、 editor.exe が出力される。
 
 ### Virustotal
 
-![virustotal](https://github.com/khttemp/dend-ls-cs-rs-editor/blob/main/image/virustotal.png)
+![virustotal](https://github.com/khttemp/dend-lbcr-editor/blob/main/image/virustotal.png)
 
 
 以上。

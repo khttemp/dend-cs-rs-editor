@@ -8,6 +8,7 @@ from tkinter import ttk
 from tkinter import messagebox as mb
 from tkinter import simpledialog as sd
 from dendDecrypt import LSdecrypt as dendLs
+from dendDecrypt import BSdecrypt as dendBs
 from dendDecrypt import CSdecrypt as dendCs
 from dendDecrypt import RSdecrypt as dendRs
 
@@ -269,6 +270,13 @@ def openFile():
             decryptFile = None
             notchContentCnt = 2
             decryptFile = dendLs.LSdecrypt(file_path)
+    elif v_radio.get() == BS:
+        file_path = fd.askopenfilename(filetypes=[("TRAIN_DATA", "TRAIN_DATA2ND.BIN")])
+        if file_path:
+            del decryptFile
+            decryptFile = None
+            notchContentCnt = 2
+            decryptFile = dendBs.BSdecrypt(file_path)
     elif v_radio.get() == CS:
         file_path = fd.askopenfilename(filetypes=[("TRAIN_DATA", "TRAIN_DATA3RD.BIN")])
         if file_path:
@@ -470,7 +478,7 @@ def selectGame():
     v_edit.set("この車両を修正する")
         
 root = Tk()
-root.title("電車でD LS CS RS 性能改造 1.2.0")
+root.title("電車でD LBCR 性能改造 1.3.0")
 root.geometry("1024x768")
 
 menubar = Menu(root)
@@ -494,13 +502,16 @@ edit_all_button.place(relx = 0.48, rely=0.07, relwidth=0.2, height=25)
 
 v_radio = IntVar()
 
-lsRb = Radiobutton(root, text="Lightning Stage", command = selectGame, variable=v_radio, value=0)
+lsRb = Radiobutton(root, text="Lightning Stage", command = selectGame, variable=v_radio, value=LS)
 lsRb.place(relx=0.7, rely=0.02)
 
-csRb = Radiobutton(root, text="Climax Stage", command = selectGame, variable=v_radio, value=2)
+bsRb = Radiobutton(root, text="Burning Stage", command = selectGame, variable=v_radio, value=BS)
+bsRb.place(relx=0.85, rely=0.02)
+
+csRb = Radiobutton(root, text="Climax Stage", command = selectGame, variable=v_radio, value=CS)
 csRb.place(relx=0.7, rely=0.07)
 
-rsRb = Radiobutton(root, text="Rising Stage", command = selectGame, variable=v_radio, value=3)
+rsRb = Radiobutton(root, text="Rising Stage", command = selectGame, variable=v_radio, value=RS)
 rsRb.select()
 rsRb.place(relx=0.85, rely=0.07)
 
