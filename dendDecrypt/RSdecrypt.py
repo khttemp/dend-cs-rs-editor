@@ -79,6 +79,8 @@ class RSdecrypt():
         self.indexList = []
         self.byteArr = []
         self.error = ""
+        self.trainModelList = []
+        self.colorIdx = 0
 
     def open(self):
         try:
@@ -98,12 +100,12 @@ class RSdecrypt():
     def decrypt(self, line):
         self.trainInfoList = []
         self.indexList = []
+        self.error = ""
+        self.trainModelList = []
+        
         index = 0
         trainCnt = line[index]
         index += 1
-
-        #[Yuri], [S300]のデータは使わない
-        trainCnt -= 2
 
         for i in range(trainCnt):
             self.indexList.append(index)
@@ -136,15 +138,29 @@ class RSdecrypt():
                 train_huriko.append(line[index])
                 index += 1
             self.trainInfoList.append(train_huriko)
+
+            train = {
+                "trackNames":[],
+                "mdlCnt":0,
+                "mdlNames":[],
+                "colNames":[],
+                "pantaNames":[],
+                "mdlList":[],
+                "pantaList":[],
+                "colList":[],
+                "colorCnt":0
+            }
             
-            smfCnt = line[index]
+            smfTrackCnt = line[index]
             index += 1
-            for j in range(smfCnt):
+            for j in range(smfTrackCnt):
                 b = line[index]
                 index += 1
+                train["trackNames"].append(line[index:index+b].decode("shift-jis"))
                 index += b
 
             mdlCnt = line[index]
+            train["mdlCnt"] = mdlCnt
             index += 1
 
             mdlSmfCnt = line[index]
@@ -152,21 +168,31 @@ class RSdecrypt():
             for j in range(mdlSmfCnt):
                 b = line[index]
                 index += 1
+                train["mdlNames"].append(line[index:index+b].decode("shift-jis"))
                 index += b
+
+            train["mdlNames"].append("なし")
 
             colCnt = line[index]
             index += 1
             for j in range(colCnt):
                 b = line[index]
                 index += 1
+                train["colNames"].append(line[index:index+b].decode("shift-jis"))
                 index += b
+
+            train["colNames"].append("なし")
 
             pantaCnt = line[index]
             index += 1
             for j in range(pantaCnt):
                 b = line[index]
                 index += 1
+                train["pantaNames"].append(line[index:index+b].decode("shift-jis"))
                 index += b
+
+            train["pantaNames"].append("なし")
+                
             for j in range(4):
                 b = line[index]
                 index += 1
@@ -174,15 +200,25 @@ class RSdecrypt():
 
             #mdlList
             for j in range(mdlCnt):
+                if line[index] == 0xFF:
+                    train["mdlList"].append(-1)
+                else:
+                    train["mdlList"].append(line[index])
                 index += 1
             #pantaList
-            pantaList = []
             for j in range(mdlCnt):
-                pantaList.append(line[index])
+                if line[index] == 0xFF:
+                    train["pantaList"].append(-1)
+                else:
+                    train["pantaList"].append(line[index])
                 index += 1
 
             #colList
             for j in range(mdlCnt):
+                if line[index] == 0xFF:
+                    train["colList"].append(-1)
+                else:
+                    train["colList"].append(line[index])
                 index += 1
 
             for j in range(5):
@@ -231,6 +267,146 @@ class RSdecrypt():
                 index += 1
                 index += b
                 index += 0xC
+
+            self.trainModelList.append(train)
+
+        self.colorIdx = index
+        for i in range(len(RSTrainName)+2):
+            trainName = ""
+            if i == len(RSTrainName):
+                trainName = "Yuri"
+            elif i == len(RSTrainName)+1:
+                trainName = "S300"
+            else:
+                trainName = RSTrainName[i]
+                self.trainModelList[i]["colorCnt"] = line[index]
+            index += 1
+    def saveTrainInfo(self, trainIdx, index, trainWidget):
+        try:
+            newByteArr = bytearray()
+            newByteArr.extend(self.byteArr[0:index])
+            
+            modelInfo = self.trainModelList[trainIdx]
+            newTrackList = modelInfo["trackNames"]
+            
+            newByteArr.append(len(newTrackList))
+            for newTrack in newTrackList:
+                newByteArr.append(len(newTrack))
+                newByteArr.extend(newTrack.encode("shift-jis"))
+
+            newCnt = modelInfo["mdlCnt"]
+            newByteArr.append(newCnt)
+
+            newMdlList = trainWidget.comboList[0]
+            newPantaList = trainWidget.comboList[1]
+            newColList = trainWidget.comboList[2]
+
+            newByteArr.append(len(newMdlList["value"])-1)
+            for newMdl in newMdlList["value"]:
+                if newMdl == "なし":
+                    continue
+                newByteArr.append(len(newMdl))
+                newByteArr.extend(newMdl.encode("shift-jis"))
+
+            newByteArr.append(len(newColList["value"])-1)
+            for newCol in newColList["value"]:
+                if newCol == "なし":
+                    continue
+                newByteArr.append(len(newCol))
+                newByteArr.extend(newCol.encode("shift-jis"))
+            
+            newByteArr.append(len(newPantaList["value"])-1)
+            for newPanta in newPantaList["value"]:
+                if newPanta == "なし":
+                    continue
+                newByteArr.append(len(newPanta))
+                newByteArr.extend(newPanta.encode("shift-jis"))
+
+###
+            smfTrackCnt = self.byteArr[index]
+            index += 1
+
+            for i in range(smfTrackCnt):
+                b = self.byteArr[index]
+                index += 1
+                index += b
+
+            oldCnt = self.byteArr[index]
+            index += 1
+
+            mdlSmfCnt = self.byteArr[index]
+            index += 1
+            for i in range(mdlSmfCnt):
+                b = self.byteArr[index]
+                index += 1
+                index += b
+
+            colCnt = self.byteArr[index]
+            index += 1
+            for i in range(colCnt):
+                b = self.byteArr[index]
+                index += 1
+                index += b
+
+            pantaCnt = self.byteArr[index]
+            index += 1
+            for i in range(pantaCnt):
+                b = self.byteArr[index]
+                index += 1
+                index += b
+###
+            startIdx = index
+            for i in range(4):
+                b = self.byteArr[index]
+                index += 1
+                index += b
+            newByteArr.extend(self.byteArr[startIdx:index])
+###
+            for i in range(newCnt):
+                idx = trainWidget.comboList[3*i].current()
+                if idx == len(trainWidget.comboList[3*i]["values"])-1:
+                    idx = 255
+                newByteArr.append(idx)
+
+            for i in range(newCnt):
+                idx = trainWidget.comboList[3*i+1].current()
+                if idx == len(trainWidget.comboList[3*i+1]["values"])-1:
+                    idx = 255
+                newByteArr.append(idx)
+
+            for i in range(newCnt):
+                idx = trainWidget.comboList[3*i+2].current()
+                if idx == len(trainWidget.comboList[3*i+2]["values"])-1:
+                    idx = 255
+                newByteArr.append(idx)
+                
+###
+            #mdlList
+            for i in range(oldCnt):
+                index += 1
+            #pantaList
+            for i in range(oldCnt):
+                index += 1
+            #colList
+            for i in range(oldCnt):
+                index += 1
+
+###
+            newIndex = len(newByteArr)
+            newByteArr.extend(self.byteArr[index:])
+            diff = newIndex - index
+            index = newIndex
+###
+            colorCnt = trainWidget.varColor.get()
+            colorIdx = diff + self.colorIdx + trainIdx
+            newByteArr[colorIdx] = colorCnt
+
+            self.byteArr = newByteArr
+            return True
+        except Exception as e:
+            self.error = str(e)
+            return False
+        
     def saveTrain(self):
         try:
             w = open(self.filePath, "wb")
