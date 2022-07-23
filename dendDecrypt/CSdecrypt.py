@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import struct
-import sys, os
 
 CSTrainName = [
     "H2000",
@@ -75,6 +74,10 @@ class CSdecrypt():
         self.error = ""
         self.trainModelList = []
         self.colorIdx = 0
+        self.stageIdx = -1
+        self.stageList = []
+        self.stageEditIdx = 11
+        self.stageCnt = 5
 
     def open(self):
         try:
@@ -96,6 +99,7 @@ class CSdecrypt():
         self.indexList = []
         self.error = ""
         self.trainModelList = []
+        self.stageList = []
         
         index = 0
         trainCnt = line[index]
@@ -266,6 +270,28 @@ class CSdecrypt():
                 trainName = CSTrainName[i]
                 self.trainModelList[i]["colorCnt"] = line[index]
             index += 1
+        self.stageIdx = index
+
+        stageCnt = line[index]
+        index += 1
+        for i in range(stageCnt):
+            stageNum = struct.unpack("<h", line[index:index+2])[0]
+            index += 2
+            train_1pIdx = line[index]
+            if train_1pIdx == 0xFF:
+                train_1pIdx = -1
+            index += 1
+            train_2pIdx = line[index]
+            if train_2pIdx == 0xFF:
+                train_2pIdx = -1
+            index += 1
+            train_3pIdx = line[index]
+            if train_3pIdx == 0xFF:
+                train_3pIdx = -1
+            index += 1
+            daishaIdx = line[index]
+            index += 1
+            self.stageList.append([stageNum, train_1pIdx, train_2pIdx, train_3pIdx, daishaIdx])
     def saveTrainInfo(self, trainIdx, index, trainWidget):
         try:
             newByteArr = bytearray()
@@ -376,9 +402,7 @@ class CSdecrypt():
             self.byteArr = newByteArr
             return True
         except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.error = "{0} {1} {2}".format(exc_type, fname, exc_tb.tb_lineno)
+            self.error = str(e)
             return False
     def saveTrain(self):
         try:
@@ -387,7 +411,5 @@ class CSdecrypt():
             w.close()
             return True
         except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.error = "{0} {1} {2}".format(exc_type, fname, exc_tb.tb_lineno)
+            self.error = str(e)
             return False

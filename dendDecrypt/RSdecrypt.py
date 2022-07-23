@@ -81,6 +81,9 @@ class RSdecrypt():
         self.error = ""
         self.trainModelList = []
         self.colorIdx = 0
+        self.stageIdx = -1
+        self.stageEditIdx = 16
+        self.stageCnt = 5
 
     def open(self):
         try:
@@ -102,6 +105,7 @@ class RSdecrypt():
         self.indexList = []
         self.error = ""
         self.trainModelList = []
+        self.stageList = []
         
         index = 0
         trainCnt = line[index]
@@ -281,6 +285,28 @@ class RSdecrypt():
                 trainName = RSTrainName[i]
                 self.trainModelList[i]["colorCnt"] = line[index]
             index += 1
+        self.stageIdx = index
+
+        stageCnt = line[index]
+        index += 1
+        for i in range(stageCnt):
+            stageNum = struct.unpack("<h", line[index:index+2])[0]
+            index += 2
+            train_1pIdx = line[index]
+            if train_1pIdx == 0xFF:
+                train_1pIdx = -1
+            index += 1
+            train_2pIdx = line[index]
+            if train_2pIdx == 0xFF:
+                train_2pIdx = -1
+            index += 1
+            train_3pIdx = line[index]
+            if train_3pIdx == 0xFF:
+                train_3pIdx = -1
+            index += 1
+            daishaIdx = line[index]
+            index += 1
+            self.stageList.append([stageNum, train_1pIdx, train_2pIdx, train_3pIdx, daishaIdx])
     def saveTrainInfo(self, trainIdx, index, trainWidget):
         try:
             newByteArr = bytearray()

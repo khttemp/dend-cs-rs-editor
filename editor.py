@@ -211,8 +211,8 @@ class trainModelWidget():
         self.colorTextLb.grid(row=1, column=1, sticky=W+E)
         self.colorBtn = Button(self.txtFrame, text="修正", font=("", 14), command=lambda:self.editVar(self.varColor, self.varColor.get()), state="disabled")
         self.colorBtn.grid(row=1, column=2, sticky=W+E)
-
-        self.mdlInfoBtn = Button(self.txtFrame, text="モデル情報を修正", font=("", 14), command=lambda:editModelInfo(self.txtFrame), state="disabled")
+        
+        self.mdlInfoBtn = Button(self.txtFrame, text="モデル情報を修正", font=("", 14), command=self.editModel, state="disabled")
         self.mdlInfoBtn.grid(columnspan=3, row=2, column=0, sticky=W+E)
 
         self.mdlFrame = Frame(frame, padx=5, pady=5)
@@ -222,8 +222,9 @@ class trainModelWidget():
         self.trainLb.grid(row=0, column=0)
         self.modelLb = Label(self.mdlFrame, text="モデル", font=("", 20), width=6, borderwidth=1, relief="solid")
         self.modelLb.grid(row=1, column=0)
-        self.pantaLb = Label(self.mdlFrame, text="パンタ", font=("", 20), width=6, borderwidth=1, relief="solid")
-        self.pantaLb.grid(row=2, column=0)
+        if len(modelInfo["pantaNames"]) > 0:
+            self.pantaLb = Label(self.mdlFrame, text="パンタ", font=("", 20), width=6, borderwidth=1, relief="solid")
+            self.pantaLb.grid(row=2, column=0)
         if len(modelInfo["colList"]) > 0:
             self.colLb = Label(self.mdlFrame, text="COL", font=("", 20), width=6, borderwidth=1, relief="solid")
             self.colLb.grid(row=3, column=0)
@@ -243,14 +244,15 @@ class trainModelWidget():
             else:
                 self.mdlCb.current(modelInfo["mdlList"][i])
             self.comboList.append(self.mdlCb)
-            
-            self.pantaCb = ttk.Combobox(self.mdlFrame, font=("", 14), width=20, value=modelInfo["pantaNames"], state="disabled")
-            self.pantaCb.grid(row=2, column=i+1)
-            if modelInfo["pantaList"][i] == -1:
-                self.pantaCb.current(len(modelInfo["pantaNames"])-1)
-            else:
-                self.pantaCb.current(modelInfo["pantaList"][i])
-            self.comboList.append(self.pantaCb)
+
+            if len(modelInfo["pantaNames"]) > 0:
+                self.pantaCb = ttk.Combobox(self.mdlFrame, font=("", 14), width=20, value=modelInfo["pantaNames"], state="disabled")
+                self.pantaCb.grid(row=2, column=i+1)
+                if modelInfo["pantaList"][i] == -1:
+                    self.pantaCb.current(len(modelInfo["pantaNames"])-1)
+                else:
+                    self.pantaCb.current(modelInfo["pantaList"][i])
+                self.comboList.append(self.pantaCb)
 
             if len(modelInfo["colList"]) > 0:
                 self.colCb = ttk.Combobox(self.mdlFrame, font=("", 14), width=20, value=modelInfo["colNames"], state="disabled")
@@ -268,6 +270,15 @@ class trainModelWidget():
             self.frame.update()
         
     def editVar(self, var, value):
+        if v_radio.get() in [LS, BS]:
+            title = ""
+            if v_radio.get() == LS:
+                title = "LS"
+            else:
+                title = "BS"
+            errorMsg = "{0}はカラー修正をサポートしません".format(title)
+            mb.showerror(title="エラー", message=errorMsg)
+            return
         result = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=value)
 
         if result:
@@ -315,11 +326,12 @@ class trainModelWidget():
                     mdlCb.grid(row=1, column=oldCnt+i+1, sticky=W+E)
                     mdlCb.current(0)
                     self.comboList.append(mdlCb)
-                    modelInfo["pantaList"].append(0)
-                    pantaCb = ttk.Combobox(self.mdlFrame, font=("", 14), width=20, value=modelInfo["pantaNames"])
-                    pantaCb.grid(row=2, column=oldCnt+i+1, sticky=W+E)
-                    pantaCb.current(0)
-                    self.comboList.append(pantaCb)
+                    if len(modelInfo["pantaNames"]) > 0:
+                        modelInfo["pantaList"].append(0)
+                        pantaCb = ttk.Combobox(self.mdlFrame, font=("", 14), width=20, value=modelInfo["pantaNames"])
+                        pantaCb.grid(row=2, column=oldCnt+i+1, sticky=W+E)
+                        pantaCb.current(0)
+                        self.comboList.append(pantaCb)
                     if editableNum == 3:
                         modelInfo["colList"].append(0)
                         colCb = ttk.Combobox(self.mdlFrame, font=("", 14), width=20, value=modelInfo["colNames"])
@@ -335,9 +347,10 @@ class trainModelWidget():
                     combo = self.comboList.pop()
                     width = combo.winfo_width()
                     combo.destroy()
-                    modelInfo["pantaList"].pop()
-                    combo = self.comboList.pop()
-                    combo.destroy()
+                    if len(modelInfo["pantaNames"]) > 0:
+                        modelInfo["pantaList"].pop()
+                        combo = self.comboList.pop()
+                        combo.destroy()
                     if editableNum == 3:
                         modelInfo["colList"].pop()
                         combo = self.comboList.pop()
@@ -352,12 +365,46 @@ class trainModelWidget():
                 self.frame["width"] = 300 + self.mdlFrame.winfo_width()
                 self.frame.update()
 
+            #LSは自動編成される
+            if v_radio.get() == LS:
+                for i in range(len(modelInfo["mdlList"])):
+                    modelInfo["mdlList"][i] = 1
+                modelInfo["mdlList"][0] = 0
+                modelInfo["mdlList"][-1] = len(modelInfo["mdlNames"])-1
+
+                cIdx = 0
+                for i in range(len(self.comboList)):
+                    #TAKUMIの場合
+                    if len(modelInfo["pantaNames"]) == 0:
+                        self.comboList[i].current(modelInfo["mdlList"][cIdx])
+                        self.comboList[i]["state"] = "disabled"
+                        cIdx += 1
+                    else:
+                        if i % 2 == 0:
+                            self.comboList[i].current(modelInfo["mdlList"][cIdx])
+                            self.comboList[i]["state"] = "disabled"
+                            cIdx += 1
+
             decryptFile.trainModelList[idx] = modelInfo
+    def editModel(self):
+        if v_radio.get() not in [LS, BS]:
+            editModelInfo(root, "モデル情報修正")
+        else:
+            title = ""
+            if v_radio.get() == LS:
+                title = "LS"
+            else:
+                title = "BS"
+            errorMsg = "{0}はモデル修正をサポートしません".format(title)
+            mb.showerror(title="エラー", message=errorMsg)
 
 class editModelInfo(sd.Dialog):
     global decryptFile
     global cb
     global trainWidget
+
+    def __init__(self, master, title):
+        super(editModelInfo, self).__init__(parent=master, title=title)
 
     def body(self, frame):
         idx = cb.current()
@@ -521,7 +568,7 @@ class editModelInfo(sd.Dialog):
 
     def validate(self):
         warnMsg = "モデル情報を修正しますか？"
-        result = mb.askokcancel(title="警告", message=warnMsg, icon="warning", parent=self)
+        result = mb.askokcancel(message=warnMsg, icon="warning", parent=self)
         if result:
             idx = cb.current()
             modelInfo = decryptFile.trainModelList[idx]
@@ -581,6 +628,133 @@ class editModelInfo(sd.Dialog):
             if self.editableNum == 3:
                 trainWidget.comboList[self.editableNum*i+2].update()
                 trainWidget.comboList[self.editableNum*i+2].current(self.modelInfo["colList"][i])
+
+class editStageInfo(sd.Dialog):
+    global decryptFile
+    global cb
+    global trainWidget
+
+    def __init__(self, master, title):
+        super(editStageInfo, self).__init__(parent=master, title=title)
+
+    def body(self, master):
+        self.train_1pLb = Label(master, text="1P", font=("", 14))
+        self.train_1pLb.grid(row=0, column=1, sticky=W+E)
+        self.train_2pLb = Label(master, text="2P", font=("", 14))
+        self.train_2pLb.grid(row=0, column=2, sticky=W+E)
+        self.train_3pLb = Label(master, text="3P", font=("", 14))
+        self.train_3pLb.grid(row=0, column=3, sticky=W+E)
+
+        self.trainList = []
+
+        trackComboList = ["標準軌", "狭軌"]
+
+        if v_radio.get() > BS:
+            self.trackLb = Label(master, text="台車", font=("", 14))
+            self.trackLb.grid(row=0, column=4, sticky=W+E)
+            
+        stageStartIdx = decryptFile.stageEditIdx
+        self.trainComboList = copy.deepcopy(decryptFile.trainNameList)
+        self.trainComboList.append("なし")
+        for i in range(decryptFile.stageCnt):
+            info = decryptFile.stageList[stageStartIdx+i]
+            self.stageLb = Label(master, text="{0}ステージ".format(i+1), font=("", 14))
+            self.stageLb.grid(row=i+1, column=0, sticky=W+E)
+
+            self.train_1pCb = ttk.Combobox(master, font=("", 14), width=8, value=self.trainComboList)
+            self.train_1pCb.grid(row=i+1, column=1, sticky=W+E)
+            self.train_1pCb.current(info[1])
+            self.trainList.append(self.train_1pCb)
+            self.train_2pCb = ttk.Combobox(master, font=("", 14), width=8, value=self.trainComboList)
+            self.train_2pCb.grid(row=i+1, column=2, sticky=W+E)
+            self.train_2pCb.current(info[2])
+            self.trainList.append(self.train_2pCb)
+            self.train_3pCb = ttk.Combobox(master, font=("", 14), width=8, value=self.trainComboList)
+            self.train_3pCb.grid(row=i+1, column=3, sticky=W+E)
+            if info[3] == -1:
+                self.train_3pCb.current(len(self.trainComboList)-1)
+            else:
+                self.train_3pCb.current(info[3])
+            self.trainList.append(self.train_3pCb)
+
+            if v_radio.get() > BS:
+                self.trackCb = ttk.Combobox(master, font=("", 14), width=8, value=trackComboList)
+                self.trackCb.grid(row=i+1, column=4, sticky=W+E)
+                self.trackCb.current(info[4])
+                self.trainList.append(self.trackCb)
+
+    def validate(self):
+        warnMsg = "ステージ情報を修正しますか？"
+        result = mb.askokcancel(message=warnMsg, icon="warning", parent=self)
+        if result:
+            index = decryptFile.stageIdx
+            stageAllCnt = decryptFile.byteArr[index]
+            index += 1
+            stageList = decryptFile.stageList
+
+            infoCnt = 4
+            if v_radio.get() == BS:
+                infoCnt = 3
+
+            for i in range(decryptFile.stageCnt):
+                train_1pCb = self.trainList[infoCnt*i].current()
+                if train_1pCb == len(self.trainComboList)-1:
+                    train_1pCb = -1
+                stageList[decryptFile.stageEditIdx+i][1] = train_1pCb
+
+                train_2pCb = self.trainList[infoCnt*i+1].current()
+                if train_2pCb == len(self.trainComboList)-1:
+                    train_2pCb = -1
+                stageList[decryptFile.stageEditIdx+i][2] = train_2pCb
+
+                train_3pCb = self.trainList[infoCnt*i+2].current()
+                if train_3pCb == len(self.trainComboList)-1:
+                    train_3pCb = -1
+                stageList[decryptFile.stageEditIdx+i][3] = train_3pCb
+
+                if v_radio.get() > BS:
+                    trackCb = self.trainList[infoCnt*i+3].current()
+                    stageList[decryptFile.stageEditIdx+i][4] = trackCb
+
+            decryptFile.stageList = stageList
+
+            for i in range(stageAllCnt):
+                if v_radio.get() > BS:
+                    index += 2
+                else:
+                    index += 1
+
+                if stageList[i][1] == -1:
+                    decryptFile.byteArr[index] = 0xFF
+                else:
+                    decryptFile.byteArr[index] = stageList[i][1]
+                index += 1
+
+                if stageList[i][2] == -1:
+                    decryptFile.byteArr[index] = 0xFF
+                else:
+                    decryptFile.byteArr[index] = stageList[i][2]
+                index += 1
+
+                if stageList[i][3] == -1:
+                    decryptFile.byteArr[index] = 0xFF
+                else:
+                    decryptFile.byteArr[index] = stageList[i][3]
+                index += 1
+
+                if v_radio.get() > BS:
+                    decryptFile.byteArr[index] = stageList[i][4]
+                    index += 1
+            return True
+
+    def apply(self):
+        errorMsg = "保存に失敗しました。\nファイルが他のプログラムによって開かれている\nまたは権限問題の可能性があります"
+        if not decryptFile.saveTrain():
+            decryptFile.printError()
+            mb.showerror(title="保存エラー", message=errorMsg)
+        else:
+            mb.showinfo(title="成功", message="ステージ設定を修正しました")
+            
 
 class allEdit(sd.Dialog):
     global decryptFile
@@ -775,6 +949,7 @@ def createWidget(speed, perf, huriko, modelInfo):
     trainWidget = trainModelWidget(frame3.frame, frame3.canvas, modelInfo)
 
 def editTrain():
+    global decryptFile
     global btnList
     global trainWidget
     for btn in btnList:
@@ -791,6 +966,16 @@ def editTrain():
     cb['state'] = 'disabled'
     edit_all_button['state'] = 'disabled'
     edit_stage_train_button['state'] = 'disabled'
+
+    if v_radio.get() == LS:
+        idx = cb.current()
+        modelInfo = decryptFile.trainModelList[idx]
+        for i in range(len(trainWidget.comboList)):
+            if len(modelInfo["pantaNames"]) == 0:
+                trainWidget.comboList[i]['state'] = 'disabled'
+            else:
+                if i % 2 == 0:
+                    trainWidget.comboList[i]['state'] = 'disabled'
 
 def editAllTrain():
     global train
@@ -922,10 +1107,18 @@ def selectGame():
     v_edit.set("この車両を修正する")
 
 def editStageTrain():
-    pass
+    global decryptFile
+
+    index = decryptFile.stageIdx
+    if index == -1:
+        errorMsg = "指定車両を変更する機能はありません"
+        mb.showerror(title="エラー", message=errorMsg)
+        return
+
+    editStageInfo(root, "ステージ情報修正")
 
 root = Tk()
-root.title("電車でD LBCR 性能改造 1.3.0")
+root.title("電車でD LBCR 性能改造 1.4.0")
 root.geometry("1024x768")
 
 menubar = Menu(root)
