@@ -292,6 +292,50 @@ class CSdecrypt():
             daishaIdx = line[index]
             index += 1
             self.stageList.append([stageNum, train_1pIdx, train_2pIdx, train_3pIdx, daishaIdx])
+    def saveNotchInfo(self, trainIdx, newNotchNum):
+        try:
+            newByteArr = bytearray()
+            index = self.indexList[trainIdx]
+            speed = self.trainInfoList[3*trainIdx]
+            notchContentCnt = 4
+            oldNotchNum = len(speed) // notchContentCnt
+
+            diff = newNotchNum - oldNotchNum
+            newSpeed = []
+            if diff <= 0:
+                for i in range(notchContentCnt):
+                    for j in range(newNotchNum):
+                        newSpeed.append(speed[oldNotchNum * i + j])
+            else:
+                for i in range(notchContentCnt):
+                    for j in range(oldNotchNum):
+                        newSpeed.append(speed[oldNotchNum * i + j])
+                    for j in range(diff):
+                        newSpeed.append(0)
+            
+            newByteArr.extend(self.byteArr[0:index])
+            newByteArr.append(newNotchNum)
+            index += 1
+            
+            for i in range(len(newSpeed)):
+                if i >= 2 * newNotchNum and i < 3 * newNotchNum:
+                    newByteArr.append(newSpeed[i])
+                else:
+                    byteF = struct.pack("<f", newSpeed[i])
+                    newByteArr.extend(byteF)
+                    
+            for i in range(len(speed)):
+                if i >= 2 * oldNotchNum and i < 3 * oldNotchNum:
+                    index += 1
+                else:
+                    index += 4
+
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+            return True
+        except Exception as e:
+            self.error = str(e)
+            return False
     def saveTrainInfo(self, trainIdx, index, trainWidget):
         try:
             newByteArr = bytearray()

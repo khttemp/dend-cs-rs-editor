@@ -258,6 +258,44 @@ class LSdecrypt():
                 index += 4
 
             self.trainModelList.append(train)
+    def saveNotchInfo(self, trainIdx, newNotchNum):
+        try:
+            newByteArr = bytearray()
+            index = self.indexList[trainIdx]
+            speed = self.trainInfoList[2*trainIdx]
+            notchContentCnt = 2
+            oldNotchNum = len(speed) // notchContentCnt
+
+            diff = newNotchNum - oldNotchNum
+            newSpeed = []
+            if diff <= 0:
+                for i in range(notchContentCnt):
+                    for j in range(newNotchNum):
+                        newSpeed.append(speed[oldNotchNum * i + j])
+            else:
+                for i in range(notchContentCnt):
+                    for j in range(oldNotchNum):
+                        newSpeed.append(speed[oldNotchNum * i + j])
+                    for j in range(diff):
+                        newSpeed.append(0)
+            
+            newByteArr.extend(self.byteArr[0:index])
+            newByteArr.append(newNotchNum)
+            index += 1
+            
+            for i in range(len(newSpeed)):
+                byteF = struct.pack("<f", newSpeed[i])
+                newByteArr.extend(byteF)
+            
+            for i in range(len(speed)):
+                index += 4
+
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+            return True
+        except Exception as e:
+            self.error = str(e)
+            return False
     def saveTrainInfo(self, trainIdx, index, trainWidget):
         try:            
             modelInfo = self.trainModelList[trainIdx]

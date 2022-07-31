@@ -189,31 +189,46 @@ class hurikoWidget():
 class trainModelWidget():
     global decryptFile
     global trainWidget
+    global notchContentCnt
 
     def __init__(self, frame, canvas, modelInfo):
         self.frame = frame
         self.txtFrame = Frame(frame, padx=5, pady=5)
         self.txtFrame.place(relx=0, rely=0)
+        self.notchLb = Label(self.txtFrame, text="ノッチ", font=("", 20), width=7, borderwidth=1, relief="solid")
+        self.notchLb.grid(row=0, column=0, sticky=W+E)
+
+        idx = cb.current()
+        index = decryptFile.indexList[idx]
+        notchNum = decryptFile.byteArr[index]
+        
+        self.varNotch = IntVar()
+        self.varNotch.set(notchNum)
+        self.notchTextLb = Label(self.txtFrame, textvariable=self.varNotch, font=("", 20), width=7, borderwidth=1, relief="solid")
+        self.notchTextLb.grid(row=0, column=1, sticky=W+E)
+        self.notchBtn = Button(self.txtFrame, text="修正", font=("", 14), command=lambda:self.editNotchVar(self.varNotch, self.varNotch.get()), state="disabled")
+        self.notchBtn.grid(row=0, column=2, sticky=W+E)
+        
         self.henseiLb = Label(self.txtFrame, text="編成数", font=("", 20), width=7, borderwidth=1, relief="solid")
-        self.henseiLb.grid(row=0, column=0, sticky=W+E)
+        self.henseiLb.grid(row=1, column=0, sticky=W+E)
         self.varHensei = IntVar()
         self.varHensei.set(modelInfo["mdlCnt"])
         self.henseiTextLb = Label(self.txtFrame, textvariable=self.varHensei, font=("", 20), width=7, borderwidth=1, relief="solid")
-        self.henseiTextLb.grid(row=0, column=1, sticky=W+E)
+        self.henseiTextLb.grid(row=1, column=1, sticky=W+E)
         self.henseiBtn = Button(self.txtFrame, text="修正", font=("", 14), command=lambda:self.editHenseiVar(self.varHensei, self.varHensei.get()), state="disabled")
-        self.henseiBtn.grid(row=0, column=2, sticky=W+E)
+        self.henseiBtn.grid(row=1, column=2, sticky=W+E)
 
         self.colorLb = Label(self.txtFrame, text="カラー数", font=("", 20), width=7, borderwidth=1, relief="solid")
-        self.colorLb.grid(row=1, column=0, sticky=W+E)
+        self.colorLb.grid(row=2, column=0, sticky=W+E)
         self.varColor = IntVar()
         self.varColor.set(modelInfo["colorCnt"])
         self.colorTextLb = Label(self.txtFrame, textvariable=self.varColor, font=("", 20), width=7, borderwidth=1, relief="solid")
-        self.colorTextLb.grid(row=1, column=1, sticky=W+E)
+        self.colorTextLb.grid(row=2, column=1, sticky=W+E)
         self.colorBtn = Button(self.txtFrame, text="修正", font=("", 14), command=lambda:self.editVar(self.varColor, self.varColor.get()), state="disabled")
-        self.colorBtn.grid(row=1, column=2, sticky=W+E)
+        self.colorBtn.grid(row=2, column=2, sticky=W+E)
         
         self.mdlInfoBtn = Button(self.txtFrame, text="モデル情報を修正", font=("", 14), command=self.editModel, state="disabled")
-        self.mdlInfoBtn.grid(columnspan=3, row=2, column=0, sticky=W+E)
+        self.mdlInfoBtn.grid(columnspan=3, row=3, column=0, sticky=W+E)
 
         self.mdlFrame = Frame(frame, padx=5, pady=5)
         self.mdlFrame.place(x=300, y=0)
@@ -296,6 +311,9 @@ class trainModelWidget():
             except Exception:
                 errorMsg = "予想外のエラーです"
                 mb.showerror(title="エラー", message=errorMsg)
+
+    def editNotchVar(self, var, value):
+        editNotchInfo(root, "ノッチ情報修正")
 
     def editHenseiVar(self, var, value):
         result = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=value)
@@ -397,6 +415,67 @@ class trainModelWidget():
                 title = "BS"
             errorMsg = "{0}はモデル修正をサポートしません".format(title)
             mb.showerror(title="エラー", message=errorMsg)
+
+class editNotchInfo(sd.Dialog):
+    global decryptFile
+    global trainWidget
+    global notchContentCnt
+    
+    def __init__(self, master, title):
+        super(editNotchInfo, self).__init__(parent=master, title=title)
+
+    def body(self, frame):
+        idx = cb.current()
+        index = decryptFile.indexList[idx]
+        notchNum = decryptFile.byteArr[index]
+
+        if notchNum == 4:
+            notchIdx = 0
+        elif notchNum == 5:
+            notchIdx = 1
+        elif notchNum == 12:
+            notchIdx = 2
+        
+        self.notchLb = Label(frame, text="ノッチ情報を修正してください")
+        self.notchLb.grid(row=0, column=0)
+        notchList = ["４ノッチ", "５ノッチ", "１２ノッチ"]
+        self.notchCb = ttk.Combobox(frame, width=12, value=notchList, state="readonly")
+        self.notchCb.current(notchIdx)
+        self.notchCb.grid(row=1, column=0)
+
+    def validate(self):
+        if v_radio.get() <= BS:
+            if self.notchCb.current() == 2:
+                mb.showerror(title="エラー", message="12ノッチを対応できません")
+                return False
+        warnMsg = "ノッチ情報を修正しますか？"
+        result = mb.askokcancel(message=warnMsg, icon="warning", parent=self)
+        if result:
+            idx = cb.current()
+            
+            newNotchNum = -1
+            notchIdx = self.notchCb.current()
+            if notchIdx == 0:
+                newNotchNum = 4
+            elif notchIdx == 1:
+                newNotchNum = 5
+            elif notchIdx == 2:
+                newNotchNum = 12
+
+            if not decryptFile.saveNotchInfo(idx, newNotchNum):
+                decryptFile.printError()
+                return False
+            else:
+                return True
+    def apply(self):
+        errorMsg = "保存に失敗しました。\nファイルが他のプログラムによって開かれている\nまたは権限問題の可能性があります"
+        if not decryptFile.saveTrain():
+            decryptFile.printError()
+            mb.showerror(title="保存エラー", message=errorMsg)
+        else:
+            mb.showinfo(title="成功", message="ノッチ数を変更しました")
+            reloadFile()
+            editTrain()
 
 class editModelInfo(sd.Dialog):
     global decryptFile
@@ -955,6 +1034,7 @@ def editTrain():
     for btn in btnList:
         btn['state'] = 'normal'
 
+    trainWidget.notchBtn['state'] = 'normal'
     trainWidget.henseiBtn['state'] = 'normal'
     trainWidget.colorBtn['state'] = 'normal'
     trainWidget.mdlInfoBtn['state'] = 'normal'
@@ -998,6 +1078,7 @@ def saveTrain():
     for btn in btnList:
         btn['state'] = 'disabled'
 
+    trainWidget.notchBtn['state'] = 'disabled'
     trainWidget.henseiBtn['state'] = 'disabled'
     trainWidget.colorBtn['state'] = 'disabled'
     trainWidget.mdlInfoBtn['state'] = 'disabled'
@@ -1118,7 +1199,7 @@ def editStageTrain():
     editStageInfo(root, "ステージ情報修正")
 
 root = Tk()
-root.title("電車でD LBCR 性能改造 1.4.0")
+root.title("電車でD LBCR 性能改造 1.5.0")
 root.geometry("1024x768")
 
 menubar = Menu(root)
