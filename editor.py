@@ -838,6 +838,9 @@ class editStageInfo(sd.Dialog):
 class allEdit(sd.Dialog):
     global decryptFile
     global notchContentCnt
+
+    def __init__(self, master, title):
+        super(allEdit, self).__init__(parent=master, title=title)
     
     def body(self, master):
         self.eleLb = Label(master, text="要素", width=5, font=("", 14))
@@ -916,6 +919,139 @@ class allEdit(sd.Dialog):
             errorMsg = "数字で入力してください。"
             mb.showerror(title="数字エラー", message=errorMsg, parent=self)
         
+class trainInfoEdit(sd.Dialog):
+    global decryptFile
+
+    def __init__(self, master, title):
+        super(trainInfoEdit, self).__init__(parent=master, title=title)
+    
+    def body(self, master):
+        self.copySrcCb = ttk.Combobox(master, width=12, font=("", 14), value=decryptFile.trainNameList)
+        self.copySrcCb.grid(row=0, column=0, sticky=N+S, padx=3)
+        self.copySrcCb.current(0)
+
+        self.infoLb = Label(master, text="のノッチ・性能を", width=12, font=("", 14))
+        self.infoLb.grid(row=0, column=1, sticky=N+S, padx=3)
+
+        self.copyDistCb = ttk.Combobox(master, width=12, font=("", 14), value=decryptFile.trainNameList)
+        self.copyDistCb.grid(row=1, column=1, sticky=N+S, padx=3)
+        self.copyDistCb.current(0)
+
+        self.info2Lb = Label(master, text="にコピーする", width=12, font=("", 14))
+        self.info2Lb.grid(row=1, column=2, sticky=N+S, padx=3)
+
+    def validate(self):
+        srcIdx = self.copySrcCb.current()
+        distIdx = self.copyDistCb.current()
+
+        srcIndex = decryptFile.indexList[srcIdx]
+        srcNotchNum = decryptFile.byteArr[srcIndex]
+        distIndex = decryptFile.indexList[distIdx]
+        distNotchNum = decryptFile.byteArr[distIndex]
+
+        srcSpeed = None
+        distSpeed = None
+        srcPerf = None
+        distPerf = None
+        srcHuriko = None
+        distHuriko = None
+        warnMsg = ""
+        
+        if decryptFile.trainHurikoNameList != "":
+            srcSpeed = decryptFile.trainInfoList[3*srcIdx]
+            srcPerf = decryptFile.trainInfoList[3*srcIdx+1]
+            srcHuriko = decryptFile.trainInfoList[3*srcIdx+2]
+            distSpeed = decryptFile.trainInfoList[3*distIdx]
+            distPerf = decryptFile.trainInfoList[3*distIdx+1]
+            distHuriko = decryptFile.trainInfoList[3*distIdx+2]
+        else:
+            srcSpeed = decryptFile.trainInfoList[2*srcIdx]
+            srcPerf = decryptFile.trainInfoList[2*srcIdx+1]
+            distSpeed = decryptFile.trainInfoList[2*distIdx]
+            distPerf = decryptFile.trainInfoList[2*distIdx+1]
+
+        if srcNotchNum > distNotchNum:
+            warnMsg += "※{0}のノッチ情報を{1}ノッチまでコピーします。\n".format(decryptFile.trainNameList[srcIdx], distNotchNum)
+        elif srcNotchNum < distNotchNum:
+            warnMsg += "※{0}のノッチ情報を{1}ノッチまでコピーします。\n".format(decryptFile.trainNameList[srcIdx], srcNotchNum)
+            
+        warnMsg += "ノッチ・性能を全部コピーしますか？"
+        result = mb.askokcancel(title="警告", message=warnMsg, icon="warning", parent=self)
+            
+        if result:
+            loopCnt = 0
+            if srcNotchNum > distNotchNum:
+                loopCnt = distNotchNum
+            else:
+                loopCnt = srcNotchNum
+                
+            if decryptFile.trainHurikoNameList != "":
+                for i in range(len(distPerf)):
+                    distPerf[i] = srcPerf[i]
+                for i in range(len(distHuriko)):
+                    distHuriko[i] = srcHuriko[i]
+                
+                for i in range(4):
+                    for j in range(loopCnt):
+                        distSpeed[i*distNotchNum+j] = srcSpeed[i*srcNotchNum+j]
+            else:
+                for i in range(len(distPerf)):
+                    distPerf[i] = srcPerf[i]
+                    
+                for i in range(2):
+                    for j in range(loopCnt):
+                        distSpeed[i*distNotchNum+j] = srcSpeed[i*srcNotchNum+j]
+
+            index = decryptFile.indexList[distIdx]
+            index += 1
+            for i in range(distNotchNum):
+                speed = struct.pack("<f", distSpeed[0*distNotchNum+i])
+                for n in speed:
+                    decryptFile.byteArr[index] = n
+                    index += 1
+            for i in range(distNotchNum):
+                tlk = struct.pack("<f", distSpeed[1*distNotchNum+i])
+                for n in tlk:
+                    decryptFile.byteArr[index] = n
+                    index += 1
+            if decryptFile.trainHurikoNameList != "":
+                for i in range(distNotchNum):
+                    sound = struct.pack("<c", distSpeed[2*distNotchNum+i].to_bytes(1, 'big'))
+                    for n in sound:
+                        decryptFile.byteArr[index] = n
+                        index += 1
+                for i in range(distNotchNum):
+                    add = struct.pack("<f", distSpeed[3*distNotchNum+i])
+                    for n in add:
+                        decryptFile.byteArr[index] = n
+                        index += 1
+
+            perfCnt = len(distPerf)
+            for i in range(perfCnt):
+                perf = struct.pack("<f", distPerf[i])
+                for n in perf:
+                    decryptFile.byteArr[index] = n
+                    index += 1
+                    
+            if decryptFile.trainHurikoNameList != "":
+                for i in range(2):
+                    huriko = struct.pack("<c", distHuriko[i].to_bytes(1, 'big'))
+                    for n in huriko:
+                        decryptFile.byteArr[index] = n
+                        index += 1
+
+            errorMsg = "保存に失敗しました。\nファイルが他のプログラムによって開かれている\nまたは権限問題の可能性があります"
+            if not decryptFile.saveTrain():
+                decryptFile.printError()
+                mb.showerror(title="保存エラー", message=errorMsg)
+                return
+            
+            return True
+
+    def apply(self):
+        mb.showinfo(title="成功", message="車両を改造しました")
+        reloadFile()
+                
 
 def openFile():
     global decryptFile
@@ -971,6 +1107,7 @@ def initSelect(value):
     edit_button['state'] = 'normal'
     edit_all_button['state'] = 'normal'
     edit_stage_train_button['state'] = 'normal'
+    copy_train_info_button['state'] = 'normal'
 
     speed = decryptFile.trainInfoList[0]
     perf = decryptFile.trainInfoList[1]
@@ -1046,6 +1183,7 @@ def editTrain():
     cb['state'] = 'disabled'
     edit_all_button['state'] = 'disabled'
     edit_stage_train_button['state'] = 'disabled'
+    copy_train_info_button['state'] = 'disabled'
 
     if v_radio.get() == LS:
         idx = cb.current()
@@ -1059,7 +1197,7 @@ def editTrain():
 
 def editAllTrain():
     global train
-    allEdit(root)
+    allEdit(root, "全車両の性能を一括修正")
 
 def saveTrain():
     global cb
@@ -1074,6 +1212,7 @@ def saveTrain():
     edit_button["command"] = editTrain
     edit_all_button['state'] = 'normal'
     edit_stage_train_button['state'] = 'normal'
+    copy_train_info_button['state'] = 'normal'
     cb['state'] = 'readonly'
     for btn in btnList:
         btn['state'] = 'disabled'
@@ -1185,6 +1324,7 @@ def selectGame():
     edit_button['state'] = 'disabled'
     edit_all_button['state'] = 'disabled'
     edit_stage_train_button['state'] = 'disabled'
+    copy_train_info_button['state'] = 'disabled'
     v_edit.set("この車両を修正する")
 
 def editStageTrain():
@@ -1198,8 +1338,11 @@ def editStageTrain():
 
     editStageInfo(root, "ステージ情報修正")
 
+def copyTrainInfo():
+    trainInfoEdit(root, "車両性能をコピー")
+
 root = Tk()
-root.title("電車でD LBCR 性能改造 1.5.0")
+root.title("電車でD LBCR 性能改造 1.6.0")
 root.geometry("1024x768")
 
 menubar = Menu(root)
@@ -1224,6 +1367,9 @@ v_radio = IntVar()
 
 edit_stage_train_button = ttk.Button(root, text="ステージのデフォルト車両変更", command=editStageTrain, state='disabled')
 edit_stage_train_button.place(relx = 0.48, rely=0.12, relwidth=0.2, height=25)
+
+copy_train_info_button = ttk.Button(root, text="車両の性能をコピー", command=copyTrainInfo, state='disabled')
+copy_train_info_button.place(relx = 0.05, rely=0.12, relwidth=0.2, height=25)
 
 lsRb = Radiobutton(root, text="Lightning Stage", command = selectGame, variable=v_radio, value=LS)
 lsRb.place(relx=0.7, rely=0.02)
