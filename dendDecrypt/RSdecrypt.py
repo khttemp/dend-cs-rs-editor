@@ -132,7 +132,7 @@ class RSdecrypt():
             train_perf = []
             for j in range(len(perfName)):
                 perf = struct.unpack("<f", line[index:index+4])[0]
-                perf = round(perf, 4)
+                perf = round(perf, 5)
                 train_perf.append(perf)
                 index += 4
             self.trainInfoList.append(train_perf)

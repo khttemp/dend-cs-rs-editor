@@ -2,6 +2,7 @@
 
 import struct
 import copy
+import os
 from tkinter import *
 from tkinter import filedialog as fd
 from tkinter import ttk
@@ -22,6 +23,78 @@ LS = 0
 BS = 1
 CS = 2
 RS = 3
+
+defaultData = []
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("dendData"), relative_path)
+
+def defaultDataRead(game):
+    global defaultData
+
+    defaultData = []
+    path = ""
+    if game == LS:
+        path = resource_path("LSdata.txt")
+    elif game == BS:
+        path = resource_path("BSdata.txt")
+    elif game == CS:
+        path = resource_path("CSdata.txt")
+    elif game == RS:
+        path = resource_path("RSdata.txt")
+
+    f = open(path)
+    lines = f.readlines()
+    f.close()
+
+    count = 1
+    mdlCnt = int(lines[0])
+    for i in range(mdlCnt):
+        name = lines[count].split("\t")[0]
+        count += 1
+
+        notchs = [round(float(f), 4) for f in lines[count].split("\t")]
+        count += 3
+
+        tlks = [round(float(f), 4) for f in lines[count].split("\t")]
+        count += 3
+
+        if game >= CS:
+            soundNums = [int(i) for i in lines[count].split("\t")]
+            count += 1
+            adds = [round(float(f), 4) for f in lines[count].split("\t")]
+            count += 3
+
+        attNames = lines[count].split("\t")
+        count += 1
+        atts = [round(float(f), 5) for f in lines[count].split("\t")]
+        count += 3
+
+        if game >= CS:
+            hurikos = [int(i) for i in lines[count].split("\t")]
+            count += 1
+
+        if game >= CS:
+            defaultData.append(
+                {
+                    "name":name,
+                    "notch":notchs,
+                    "tlk":tlks,
+                    "soundNum":soundNums,
+                    "add":adds,
+                    "att":atts,
+                    "huriko":hurikos,
+                })
+        else:
+            defaultData.append(
+                {
+                    "name":name,
+                    "notch":notchs,
+                    "tlk":tlks,
+                    "att":atts,
+                })
 
 class Scrollbarframe():
     def __init__(self, parent, bar_x = False, bar_y = True):
@@ -54,20 +127,52 @@ class notchWidget():
     global notchContentCnt
     
     def __init__(self, i, notchCnt, frame, speed):
+        idx = cb.current()
+        
         self.notchNum = "ノッチ" + str(i+1)
         self.notchNumLb = Label(frame, text=self.notchNum, font=("", 20), width=10, borderwidth=1, relief="solid")
         self.notchNumLb.grid(rowspan=notchContentCnt, row=notchContentCnt*i, column=0, sticky=N+S)
 
+        try:
+            color = ""
+            if defaultData[idx]["notch"][i] < speed[i]:
+                color = "red"
+            elif defaultData[idx]["notch"][i] > speed[i]:
+                color = "blue"
+            else:
+                color = "black"
+            speedDefaultValue = defaultData[idx]["notch"][i]
+        except:
+            color = "green"
+            speedDefaultValue = None
+
         self.speedNameLb = Label(frame, text="speed", font=("", 20), width=5, borderwidth=1, relief="solid")
         self.speedNameLb.grid(row=notchContentCnt*i, column=1, sticky=W+E)
         self.varSpeed = DoubleVar()
-        self.varSpeed.set(str(speed[i]))
+        self.varSpeed.set(str(speed[i]))        
+        
         varList.append(self.varSpeed)
         self.speedLb = Label(frame, textvariable=self.varSpeed, font=("", 20), width=5, borderwidth=1, relief="solid")
         self.speedLb.grid(row=notchContentCnt*i, column=2, sticky=W+E)
-        self.speedBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varSpeed, self.varSpeed.get()), state="disabled")
+        self.speedBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar([self.speedNameLb, self.speedLb], self.varSpeed, self.varSpeed.get(), speedDefaultValue), state="disabled")
         self.speedBtn.grid(row=notchContentCnt*i, column=3, sticky=W+E)
         btnList.append(self.speedBtn)
+
+        self.speedNameLb["fg"] = color
+        self.speedLb["fg"] = color
+
+        try:
+            color = ""
+            if defaultData[idx]["tlk"][i] < speed[notchCnt + i]:
+                color = "red"
+            elif defaultData[idx]["tlk"][i] > speed[notchCnt + i]:
+                color = "blue"
+            else:
+                color = "black"
+            tlkDefaultValue = defaultData[idx]["tlk"][i]
+        except:
+            color = "green"
+            tlkDefaultValue = None
 
         self.tlkNameLb = Label(frame, text="tlk", font=("", 20), width=5, borderwidth=1, relief="solid")
         self.tlkNameLb.grid(row=notchContentCnt*i+1, column=1, sticky=W+E)
@@ -76,11 +181,27 @@ class notchWidget():
         varList.append(self.varTlk)
         self.tlkLb = Label(frame, textvariable=self.varTlk, font=("", 20), width=5, borderwidth=1, relief="solid")
         self.tlkLb.grid(row=notchContentCnt*i+1, column=2, sticky=W+E)
-        self.tlkBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varTlk, self.varTlk.get()), state="disabled")
+        self.tlkBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar([self.tlkNameLb, self.tlkLb], self.varTlk, self.varTlk.get(), tlkDefaultValue), state="disabled")
         self.tlkBtn.grid(row=notchContentCnt*i+1, column=3, sticky=W+E)
         btnList.append(self.tlkBtn)
+            
+        self.tlkNameLb["fg"] = color
+        self.tlkLb["fg"] = color
 
         if notchContentCnt > 2:
+            try:
+                color = ""
+                if defaultData[idx]["soundNum"][i] < speed[notchCnt*2 + i]:
+                    color = "red"
+                elif defaultData[idx]["soundNum"][i] > speed[notchCnt*2 + i]:
+                    color = "blue"
+                else:
+                    color = "black"
+                soundDefaultValue = defaultData[idx]["soundNum"][i]
+            except:
+                color = "green"
+                soundDefaultValue = None
+                
             self.soundNameLb = Label(frame, text="sound", font=("", 20), width=5, borderwidth=1, relief="solid")
             self.soundNameLb.grid(row=notchContentCnt*i+2, column=1, sticky=W+E)
             self.varSound = IntVar()
@@ -88,10 +209,26 @@ class notchWidget():
             varList.append(self.varSound)
             self.soundLb = Label(frame, textvariable=self.varSound, font=("", 20), width=5, borderwidth=1, relief="solid")
             self.soundLb.grid(row=notchContentCnt*i+2, column=2, sticky=W+E)
-            self.soundBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varSound, self.varSound.get(), True), state="disabled")
+            self.soundBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar([self.soundNameLb, self.soundLb], self.varSound, self.varSound.get(), soundDefaultValue, True), state="disabled")
             self.soundBtn.grid(row=notchContentCnt*i+2, column=3, sticky=W+E)
             btnList.append(self.soundBtn)
-            
+
+            self.soundNameLb["fg"] = color
+            self.soundLb["fg"] = color
+
+            try:
+                color = ""
+                if defaultData[idx]["add"][i] < speed[notchCnt*3 + i]:
+                    color = "red"
+                elif defaultData[idx]["add"][i] > speed[notchCnt*3 + i]:
+                    color = "blue"
+                else:
+                    color = "black"
+                addDefaultValue = defaultData[idx]["add"][i]
+            except:
+                color = "green"
+                addDefaultValue = None
+                
             self.addNameLb = Label(frame, text="add", font=("", 20), width=5, borderwidth=1, relief="solid")
             self.addNameLb.grid(row=notchContentCnt*i+3, column=1, sticky=W+E)
             self.varAdd = DoubleVar()
@@ -99,37 +236,22 @@ class notchWidget():
             varList.append(self.varAdd)
             self.addLb = Label(frame, textvariable=self.varAdd, font=("", 20), width=5, borderwidth=1, relief="solid")
             self.addLb.grid(row=notchContentCnt*i+3, column=2, sticky=W+E)
-            self.addBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varAdd, self.varAdd.get()), state="disabled")
+            self.addBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar([self.addNameLb, self.addLb], self.varAdd, self.varAdd.get(), addDefaultValue), state="disabled")
             self.addBtn.grid(row=notchContentCnt*i+3, column=3, sticky=W+E)
             btnList.append(self.addBtn)
 
-    def editVar(self, var, value, flag = False):
-        result = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=value)
+            self.addNameLb["fg"] = color
+            self.addLb["fg"] = color
 
-        if result:
-            try:
-                if flag:
-                    try:
-                        result = int(result)
-                        var.set(result)
-                    except:
-                        errorMsg = "整数で入力してください。"
-                        mb.showerror(title="整数エラー", message=errorMsg)
-                else:
-                    try:
-                        result = float(result)
-                        var.set(result)
-                    except:
-                        errorMsg = "数字で入力してください。"
-                        mb.showerror(title="数字エラー", message=errorMsg)
-            except Exception:
-                errorMsg = "予想外のエラーです"
-                mb.showerror(title="エラー", message=errorMsg)
+    def editVar(self, labelList, var, value, defaultValue, flag = False):
+        editVarInfo(root, "値変更", labelList, var, value, defaultValue, flag)
 
 class perfWidget():
     global decryptFile
     
     def __init__(self, i, frame, perf):
+        idx = cb.current()
+        
         self.perfNameLb = Label(frame, text=decryptFile.trainPerfNameList[i], font=("", 20), width=24, borderwidth=1, relief="solid")
         self.perfNameLb.grid(row=i, column=0, sticky=W+E)
         self.varPerf = DoubleVar()
@@ -137,29 +259,29 @@ class perfWidget():
         varList.append(self.varPerf)
         self.perfLb = Label(frame, textvariable=self.varPerf, font=("", 20), width=7, borderwidth=1, relief="solid")
         self.perfLb.grid(row=i, column=1, sticky=W+E)
-        self.perfBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varPerf, self.varPerf.get()), state="disabled")
+        self.perfBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar([self.perfNameLb, self.perfLb], self.varPerf, self.varPerf.get(), defaultData[idx]["att"][i]), state="disabled")
         self.perfBtn.grid(row=i, column=2, sticky=W+E)
         btnList.append(self.perfBtn)
 
-    def editVar(self, var, value):
-        result = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=value)
+        color = ""
+        if defaultData[idx]["att"][i] < perf[i]:
+            color = "red"
+        elif defaultData[idx]["att"][i] > perf[i]:
+            color = "blue"
+        else:
+            color = "black"
+        self.perfNameLb["fg"] = color
+        self.perfLb["fg"] = color
 
-        if result:
-            try:
-                try:
-                    result = float(result)
-                    var.set(result)
-                except:
-                    errorMsg = "数字で入力してください。"
-                    mb.showerror(title="数字エラー", message=errorMsg)
-            except Exception:
-                errorMsg = "予想外のエラーです"
-                mb.showerror(title="エラー", message=errorMsg)
+    def editVar(self, labelList, var, value, defaultValue, flag = False):
+        editVarInfo(root, "値変更", labelList, var, value, defaultValue, flag)
 
 class hurikoWidget():
     global decryptFile
     
     def __init__(self, i, perfCnt, frame, huriko):
+        idx = cb.current()
+        
         self.hurikoNameLb = Label(frame, text=decryptFile.trainHurikoNameList[i], font=("", 20), width=24, borderwidth=1, relief="solid")
         self.hurikoNameLb.grid(row=perfCnt+i, column=0, sticky=W+E)
         self.varHuriko = IntVar()
@@ -167,24 +289,22 @@ class hurikoWidget():
         varList.append(self.varHuriko)
         self.hurikoLb = Label(frame, textvariable=self.varHuriko, font=("", 20), width=7, borderwidth=1, relief="solid")
         self.hurikoLb.grid(row=perfCnt+i, column=1, sticky=W+E)
-        self.hurikoBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar(self.varHuriko, self.varHuriko.get()), state="disabled")
+        self.hurikoBtn = Button(frame, text="修正", font=("", 14), command=lambda:self.editVar([self.hurikoNameLb, self.hurikoLb], self.varHuriko, self.varHuriko.get(), defaultData[idx]["huriko"][i]), state="disabled")
         self.hurikoBtn.grid(row=perfCnt+i, column=2, sticky=W+E)
         btnList.append(self.hurikoBtn)
 
-    def editVar(self, var, value):
-        result = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=value)
+        color = ""
+        if defaultData[idx]["huriko"][i] < huriko[i]:
+            color = "red"
+        elif defaultData[idx]["huriko"][i] > huriko[i]:
+            color = "blue"
+        else:
+            color = "black"
+        self.hurikoNameLb["fg"] = color
+        self.hurikoLb["fg"] = color
 
-        if result:
-            try:
-                try:
-                    result = int(result)
-                    var.set(result)
-                except:
-                    errorMsg = "整数で入力してください。"
-                    mb.showerror(title="整数エラー", message=errorMsg)
-            except Exception:
-                errorMsg = "予想外のエラーです"
-                mb.showerror(title="エラー", message=errorMsg)
+    def editVar(self, labelList, var, value, defaultValue, flag = True):
+        editVarInfo(root, "値変更", labelList, var, value, defaultValue, flag)
 
 class trainModelWidget():
     global decryptFile
@@ -415,6 +535,73 @@ class trainModelWidget():
                 title = "BS"
             errorMsg = "{0}はモデル修正をサポートしません".format(title)
             mb.showerror(title="エラー", message=errorMsg)
+
+class editVarInfo(sd.Dialog):
+    def __init__(self, master, title, labelList, var, value, defaultValue, flag = False):
+        self.labelList = labelList
+        self.var = var
+        self.value = value
+        self.defaultValue = defaultValue
+        self.flag = flag
+        super(editVarInfo, self).__init__(parent=master, title=title)
+
+    def body(self, frame):
+        self.defaultLb = Label(frame, text="デフォルトの値＝" + str(self.defaultValue), font=("", 14))
+        self.defaultLb.pack()
+
+        sep = ttk.Separator(frame, orient='horizontal')
+        sep.pack(fill=X, ipady=5)
+
+        self.inputLb = Label(frame, text="値を入力してください", font=("", 14))
+        self.inputLb.pack()
+
+        v_val = StringVar()
+        v_val.set(self.value)
+        self.inputEt = Entry(frame, textvariable=v_val, font=("", 14))
+        self.inputEt.pack()
+
+    def validate(self):
+        result = self.inputEt.get()
+        if result:
+            try:
+                if self.flag:
+                    try:
+                        result = int(result)
+                        if result < 0:
+                            errorMsg = "0以上の整数で入力してください。"
+                            mb.showerror(title="整数エラー", message=errorMsg)
+                            return False
+                        self.var.set(result)
+                    except:
+                        errorMsg = "整数で入力してください。"
+                        mb.showerror(title="整数エラー", message=errorMsg)
+                        return False
+                else:
+                    try:
+                        result = float(result)
+                        self.var.set(result)
+                    except:
+                        errorMsg = "数字で入力してください。"
+                        mb.showerror(title="数字エラー", message=errorMsg)
+                        return False
+            except Exception:
+                errorMsg = "予想外のエラーです"
+                mb.showerror(title="エラー", message=errorMsg)
+                return False
+
+            if self.defaultValue != None:
+                color = ""
+                if self.defaultValue < result:
+                    color = "red"
+                elif self.defaultValue > result:
+                    color = "blue"
+                else:
+                    color = "black"
+
+                for label in self.labelList:
+                    label["fg"] = color
+            return True
+        
 
 class editNotchInfo(sd.Dialog):
     global decryptFile
@@ -1064,6 +1251,7 @@ def openFile():
             decryptFile = None
             notchContentCnt = 2
             decryptFile = dendLs.LSdecrypt(file_path)
+            defaultDataRead(LS)
     elif v_radio.get() == BS:
         file_path = fd.askopenfilename(filetypes=[("TRAIN_DATA", "TRAIN_DATA2ND.BIN")])
         if file_path:
@@ -1071,6 +1259,7 @@ def openFile():
             decryptFile = None
             notchContentCnt = 2
             decryptFile = dendBs.BSdecrypt(file_path)
+            defaultDataRead(BS)
     elif v_radio.get() == CS:
         file_path = fd.askopenfilename(filetypes=[("TRAIN_DATA", "TRAIN_DATA3RD.BIN")])
         if file_path:
@@ -1078,6 +1267,7 @@ def openFile():
             decryptFile = None
             notchContentCnt = 4
             decryptFile = dendCs.CSdecrypt(file_path)
+            defaultDataRead(CS)
     elif v_radio.get() == RS:
         file_path = fd.askopenfilename(filetypes=[("TRAIN_DATA", "TRAIN_DATA4TH.BIN")])
         if file_path:
@@ -1085,6 +1275,7 @@ def openFile():
             decryptFile = None
             notchContentCnt = 4
             decryptFile = dendRs.RSdecrypt(file_path)
+            defaultDataRead(RS)
 
     errorMsg = "予想外のエラーが出ました。\n電車でDのファイルではない、またはファイルが壊れた可能性があります。"
     if file_path:        
@@ -1342,7 +1533,7 @@ def copyTrainInfo():
     trainInfoEdit(root, "車両性能をコピー")
 
 root = Tk()
-root.title("電車でD LBCR 性能改造 1.6.0")
+root.title("電車でD LBCR 性能改造 1.7.0")
 root.geometry("1024x768")
 
 menubar = Menu(root)
