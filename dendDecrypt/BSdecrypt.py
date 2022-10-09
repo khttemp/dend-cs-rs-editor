@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import struct
+import traceback
 
 BSTrainName = [
     "H2000",
@@ -23,15 +24,15 @@ perfName = [
     "Weight",
     "First_break",
     "【推測】Second_Breake",
-    "【推測】SpBreake",
+    "SpBreake",
     "CompPower",
-    "D_Speed",
+    "【推測】D_Speed",
     "【推測】One_Speed",
     "OutParam",
     "D_Add",
     "D_Add2",
     "【推測】D_AddFrame",
-    "未詳",
+    "【推測】Carbe",
     "Jump",
     "ChangeFrame",
     "OutRun_Top",
@@ -70,7 +71,7 @@ class BSdecrypt():
             self.byteArr = bytearray(line)
             return True
         except Exception as e:
-            self.error = str(e)
+            self.error = traceback.format_exc()
             return False
     def printError(self):
         f = open("error_log.txt", "w")
@@ -325,12 +326,36 @@ class BSdecrypt():
 
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
+            
+            self.saveTrain()
             return True
         except Exception as e:
-            self.error = str(e)
+            self.error = traceback.format_exc()
             return False
-    def saveTrainInfo(self, trainIdx, index, trainWidget):
-        try:            
+    def saveTrainInfo(self, trainIdx, varList, trainWidget):
+        try:
+            index = self.indexList[trainIdx]
+            notchCnt = self.byteArr[index]
+            index += 1
+            
+            newByteArr = self.byteArr[0:index]
+            notchContentCnt = 2
+            
+            for i in range(notchCnt):
+                speed = struct.pack("<f", varList[notchContentCnt*i].get())
+                newByteArr.extend(speed)
+                index += 4
+            for i in range(notchCnt):
+                tlk = struct.pack("<f", varList[notchContentCnt*i+1].get())
+                newByteArr.extend(tlk)
+                index += 4
+
+            perfCnt = len(self.trainPerfNameList)
+            for i in range(perfCnt):
+                perf = struct.pack("<f", varList[notchCnt*notchContentCnt+i].get())
+                newByteArr.extend(perf)
+                index += 4
+                
             modelInfo = self.trainModelList[trainIdx]
             daishaCnt = self.byteArr[index]
             index += 1
@@ -401,16 +426,202 @@ class BSdecrypt():
             index = newIndex
 
             self.byteArr = newByteArr
+
+            self.saveTrain()
             return True
         except Exception as e:
-            self.error = str(e)
+            self.error = traceback.format_exc()
             return False
-    def saveTrain(self):
+        
+    def saveStageInfo(self, stageList):
         try:
-            w = open(self.filePath, "wb")
-            w.write(self.byteArr)
-            w.close()
+            index = self.stageIdx
+            stageAllCnt = self.byteArr[index]
+            index += 1
+            
+            for i in range(stageAllCnt):
+                index += 1
+
+                if stageList[i][1] == -1:
+                    self.byteArr[index] = 0xFF
+                else:
+                    self.byteArr[index] = stageList[i][1]
+                index += 1
+
+                if stageList[i][2] == -1:
+                    self.byteArr[index] = 0xFF
+                else:
+                    self.byteArr[index] = stageList[i][2]
+                index += 1
+
+                if stageList[i][3] == -1:
+                    self.byteArr[index] = 0xFF
+                else:
+                    self.byteArr[index] = stageList[i][3]
+                index += 1
+
+            self.saveTrain()
             return True
         except Exception as e:
-            self.error = str(e)
+            self.error = traceback.format_exc()
             return False
+
+    def saveAllEdit(self, perfIndex, num, calcIndex):
+        try:
+            for index in self.indexList:
+                idx = index
+                notchCnt = self.byteArr[index]
+                idx += 1
+                #speed
+                for i in range(notchCnt):
+                    idx += 4
+                #tlk
+                for i in range(notchCnt):
+                    idx += 4
+
+                idx = idx + 4*perfIndex
+
+                originPerf = struct.unpack("<f", self.byteArr[idx:idx+4])[0]
+                if calcIndex == 0:
+                    originPerf *= num
+                else:
+                    originPerf = num
+
+                perf = struct.pack("<f", originPerf)
+                for n in perf:
+                    self.byteArr[idx] = n
+                    idx += 1
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def copyTrainInfo(self, distIdx, srcList, distList, checkStatusList):
+        srcIndex=  srcList[0]
+        srcNotchNum = srcList[1]
+        srcSpeed = srcList[2]
+        srcPerf = srcList[3]
+        distIndex = distList[0]
+        distNotchNum = distList[1]
+        distSpeed = distList[2]
+        distPerf = distList[3]
+        notchCheckStatus = checkStatusList[0]
+        perfCheckStatus = checkStatusList[1]
+        
+        try:
+            loopCnt = 0
+            if srcNotchNum > distNotchNum:
+                loopCnt = distNotchNum
+            else:
+                loopCnt = srcNotchNum
+                
+            for i in range(len(distPerf)):
+                distPerf[i] = srcPerf[i]
+                    
+            for i in range(2):
+                for j in range(loopCnt):
+                    distSpeed[i*distNotchNum+j] = srcSpeed[i*srcNotchNum+j]
+
+            index = self.indexList[distIdx]
+            index += 1
+            for i in range(distNotchNum):
+                if notchCheckStatus:
+                    speed = struct.pack("<f", distSpeed[0*distNotchNum+i])
+                    for n in speed:
+                        self.byteArr[index] = n
+                        index += 1
+                else:
+                    index += 4
+            for i in range(distNotchNum):
+                if notchCheckStatus:
+                    tlk = struct.pack("<f", distSpeed[1*distNotchNum+i])
+                    for n in tlk:
+                        self.byteArr[index] = n
+                        index += 1
+                else:
+                    index += 4
+
+            perfCnt = len(distPerf)
+            for i in range(perfCnt):
+                if perfCheckStatus:
+                    perf = struct.pack("<f", distPerf[i])
+                    for n in perf:
+                        self.byteArr[index] = n
+                        index += 1
+                else:
+                    index += 4
+                    
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def setDefaultTrainInfo(self, srcList, distData, checkStatusList):
+        srcIndex = srcList[0]
+        srcNotchNum = srcList[1]
+        srcSpeed = srcList[2]
+        srcPerf = srcList[3]
+        distNotchNum = len(distData["notch"])
+        notchCheckStatus = checkStatusList[0]
+        perfCheckStatus = checkStatusList[1]
+        
+        try:
+            loopCnt = 0
+            if srcNotchNum > distNotchNum:
+                loopCnt = distNotchNum
+            else:
+                loopCnt = srcNotchNum
+
+            index = srcIndex
+            index += 1
+
+            for i in range(len(srcPerf)):
+                srcPerf[i] = distData["att"][i]
+            
+            for i in range(2):
+                if i == 0:
+                    data = distData["notch"]
+                elif i == 1:
+                    data = distData["tlk"]
+                    
+                for j in range(loopCnt):
+                    srcSpeed[i*srcNotchNum+j] = data[j]
+                    
+            for i in range(srcNotchNum):
+                if notchCheckStatus:
+                    speed = struct.pack("<f", srcSpeed[0*srcNotchNum+i])
+                    for n in speed:
+                        self.byteArr[index] = n
+                        index += 1
+                else:
+                    index += 4
+            for i in range(srcNotchNum):
+                if notchCheckStatus:
+                    tlk = struct.pack("<f", srcSpeed[1*srcNotchNum+i])
+                    for n in tlk:
+                        self.byteArr[index] = n
+                        index += 1
+                else:
+                    index += 4
+
+            for i in range(len(distData["att"])):
+                if perfCheckStatus:
+                    perf = struct.pack("<f", srcPerf[i])
+                    for n in perf:
+                        self.byteArr[index] = n
+                        index += 1
+                else:
+                    index += 4
+                    
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+    
+    def saveTrain(self):
+        w = open(self.filePath, "wb")
+        w.write(self.byteArr)
+        w.close()
