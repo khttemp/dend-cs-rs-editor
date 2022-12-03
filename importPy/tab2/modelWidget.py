@@ -102,7 +102,7 @@ class TrainModelWidget():
         edit_model_button["state"] = "disabled"
 
         for combo in self.comboList:
-            combo["state"] = "normal"
+            combo["state"] = "readonly"
 
         if self.game == LS:
             modelInfo = self.decryptFile.trainModelList[self.trainIdx]

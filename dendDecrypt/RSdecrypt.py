@@ -93,6 +93,7 @@ class RSdecrypt():
         self.trainModelList = []
         self.colorIdx = 0
         self.stageIdx = -1
+        self.stageList = []
         self.stageEditIdx = 16
         self.stageCnt = 5
         self.notchContentCnt = 4
@@ -1178,10 +1179,7 @@ class RSdecrypt():
             notchCnt = self.byteArr[index]
 
             w.write("ノッチ:{0}\n".format(notchCnt))
-            if self.notchContentCnt == 2:
-                w.write("speed,tlk\n")
-            elif self.notchContentCnt == 4:
-                w.write("speed,tlk,sound,add\n")
+            w.write("speed,tlk,sound,add\n")
             
             for i in range(notchCnt):
                 for j in range(self.notchContentCnt):
@@ -1232,6 +1230,28 @@ class RSdecrypt():
 
             w.write("COL_index,")
             w.write(",".join([str(x) for x in train["colList"]]))
+            w.write("\n")
+
+            w.write("レンズフレア:{0}\n".format(len(train["lensList"])))
+            for i in range(len(train["lensList"])):
+                lensInfo = train["lensList"][i]
+                w.write("{0},{1}\n".format(lensInfo[0], lensInfo[1]))
+                w.write("{0},{1}\n".format(lensInfo[2], lensInfo[3]))
+                w.write(",".join([str(x) for x in lensInfo[4]]))
+                w.write("\n")
+
+            tailCnt = len(train["tailList"][0])
+            w.write("テールランプ:{0}\n".format(tailCnt))
+            w.write(",".join(train["tailList"][0]))
+            w.write("\n")
+            w.write(",".join([str(x) for x in train["tailList"][1]]))
+            w.write("\n")
+            for i in range(len(train["tailList"][2])):
+                lensInfo = train["tailList"][2][i]
+                w.write("{0},{1}\n".format(lensInfo[0], lensInfo[1]))
+                w.write("{0},{1}\n".format(lensInfo[2], lensInfo[3]))
+                w.write(",".join([str(x) for x in lensInfo[4]]))
+                w.write("\n")
             
             w.close()
             return True
@@ -1433,6 +1453,90 @@ class RSdecrypt():
                 colList.append(idx)
             cnt += 1
             self.csvReadInfo["colList"] = colList
+
+            if csvLines[cnt].strip().split(":")[0] != "レンズフレア":
+                self.error = "レンズフレア情報を探せません"
+                return False
+
+            arr = csvLines[cnt].strip().split(":")[1]
+            lensCnt = int(arr.split(",")[0])
+            cnt += 1
+
+            lensList = []
+            for i in range(lensCnt):
+                lensInfo = []
+
+                arr = csvLines[cnt].strip().split(",")
+                lensInfo.append(arr[0])
+                lensInfo.append(arr[1])
+                cnt += 1
+
+                arr = csvLines[cnt].strip().split(",")
+                lensInfo.append(float(arr[0]))
+                lensInfo.append(float(arr[1]))
+                cnt += 1
+
+                arr = csvLines[cnt].strip().split(",")
+                tempList = []
+                tempList.append(int(arr[0]))
+                tempList.append(int(arr[1]))
+                tempList.append(int(arr[2]))
+                tempList.append(int(arr[3]))
+                lensInfo.append(tempList)
+                cnt += 1
+
+                lensList.append(lensInfo)
+            self.csvReadInfo["lensList"] = lensList
+            
+            if csvLines[cnt].strip().split(":")[0] != "テールランプ":
+                self.error = "テールランプ情報を探せません"
+                return False
+
+            arr = csvLines[cnt].strip().split(":")[1]
+            tailCnt = int(arr.split(",")[0])
+            cnt += 1
+            
+            tailList = []
+            tailSmfNameList = []
+            arr = csvLines[cnt].strip().split(",")
+            for i in range(tailCnt):
+                tailSmfNameList.append(arr[i])
+            cnt += 1
+            tailList.append(tailSmfNameList)
+
+            tailElseList = []
+            arr = csvLines[cnt].strip().split(",")
+            for i in range(tailCnt):
+                tailElseList.append(int(arr[i]))
+            cnt += 1
+            tailList.append(tailElseList)
+
+            tailLensList = []
+            for i in range(tailCnt):
+                lensInfo = []
+
+                arr = csvLines[cnt].strip().split(",")
+                lensInfo.append(arr[0])
+                lensInfo.append(arr[1])
+                cnt += 1
+
+                arr = csvLines[cnt].strip().split(",")
+                lensInfo.append(float(arr[0]))
+                lensInfo.append(float(arr[1]))
+                cnt += 1
+
+                arr = csvLines[cnt].strip().split(",")
+                tempList = []
+                tempList.append(int(arr[0]))
+                tempList.append(int(arr[1]))
+                tempList.append(int(arr[2]))
+                tempList.append(int(arr[3]))
+                lensInfo.append(tempList)
+                cnt += 1
+
+                tailLensList.append(lensInfo)
+            tailList.append(tailLensList)
+            self.csvReadInfo["tailList"] = tailList
             
             return True
         except:
@@ -1525,9 +1629,57 @@ class RSdecrypt():
                 else:
                     newByteArr.append(colList[i])
             
-            index = self.henseiEndIndexList[trainIdx]
-            newByteArr.extend(self.byteArr[index:])
+            startIdx = self.henseiEndIndexList[trainIdx]
+            index = self.lensIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[startIdx:index])
 
+            lensList = self.csvReadInfo["lensList"]
+            newByteArr.append(len(lensList))
+            for i in range(len(lensList)):
+                lensInfo = lensList[i]
+                for j in range(len(lensInfo)):
+                    if j in [0, 1]:
+                        strHex = lensInfo[j].encode("shift-jis")
+                        newByteArr.append(len(strHex))
+                        newByteArr.extend(strHex)
+                    elif j in [2, 3]:
+                        tempF = struct.pack("<f", lensInfo[j])
+                        newByteArr.extend(tempF)
+                    elif j == 4:
+                        bList = lensInfo[j]
+                        for k in range(len(bList)):
+                            newByteArr.append(bList[k])
+
+            tailList = self.csvReadInfo["tailList"]
+            tailCnt = len(tailList[0])
+            newByteArr.append(tailCnt)
+
+            for i in range(tailCnt):
+                strHex = tailList[0][i].encode("shift-jis")
+                newByteArr.append(len(strHex))
+                newByteArr.extend(strHex)
+
+            for i in range(tailCnt):
+                newByteArr.append(tailList[1][i])
+
+            for i in range(tailCnt):
+                lensInfo = tailList[2][i]
+                for j in range(len(lensInfo)):
+                    if j in [0, 1]:
+                        strHex = lensInfo[j].encode("shift-jis")
+                        newByteArr.append(len(strHex))
+                        newByteArr.extend(strHex)
+                    elif j in [2, 3]:
+                        tempF = struct.pack("<f", lensInfo[j])
+                        newByteArr.extend(tempF)
+                    elif j == 4:
+                        bList = lensInfo[j]
+                        for k in range(len(bList)):
+                            newByteArr.append(bList[k])
+
+            index = self.tailEndIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[index:])
+            
             self.byteArr = newByteArr
             self.saveTrain()
             return True
