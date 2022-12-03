@@ -78,6 +78,16 @@ class RSdecrypt():
         self.trainHurikoNameList = hurikoName
         self.trainInfoList = []
         self.indexList = []
+        self.mdlIndexList = []
+        self.henseiIndexList = []
+        self.henseiModelEndIndexList = []
+        self.henseiStartIndexList = []
+        self.henseiEndIndexList = []
+        self.else2IndexList = []
+        self.lensIndexList = []
+        self.tailIndexList = []
+        self.tailEndIndexList = []
+        self.csvReadInfo = {}
         self.byteArr = []
         self.error = ""
         self.trainModelList = []
@@ -85,6 +95,7 @@ class RSdecrypt():
         self.stageIdx = -1
         self.stageEditIdx = 16
         self.stageCnt = 5
+        self.notchContentCnt = 4
 
     def open(self):
         try:
@@ -104,6 +115,16 @@ class RSdecrypt():
     def decrypt(self, line):
         self.trainInfoList = []
         self.indexList = []
+        self.mdlIndexList = []
+        self.henseiIndexList = []
+        self.henseiModelEndIndexList = []
+        self.henseiStartIndexList = []
+        self.henseiEndIndexList = []
+        self.else2IndexList = []
+        self.lensIndexList = []
+        self.tailIndexList = []
+        self.tailEndIndexList = []
+        self.csvReadInfo = {}
         self.error = ""
         self.trainModelList = []
         self.stageList = []
@@ -113,7 +134,6 @@ class RSdecrypt():
         index += 1
 
         for i in range(trainCnt):
-            #print()
             self.indexList.append(index)
             train_speed = []
             notchCnt = line[index]
@@ -145,6 +165,8 @@ class RSdecrypt():
                 index += 1
             self.trainInfoList.append(train_huriko)
 
+            self.mdlIndexList.append(index)
+
             train = {
                 "trackNames":[],
                 "mdlCnt":0,
@@ -154,7 +176,12 @@ class RSdecrypt():
                 "mdlList":[],
                 "pantaList":[],
                 "colList":[],
-                "colorCnt":0
+                "colorCnt":0,
+                "elseModel":[],
+                "else2Model":[],
+                "elseList2":[],
+                "lensList":[],
+                "tailList":[]
             }
             
             smfTrackCnt = line[index]
@@ -165,6 +192,8 @@ class RSdecrypt():
                 train["trackNames"].append(line[index:index+b].decode("shift-jis"))
                 index += b
 
+            self.henseiIndexList.append(index)
+
             mdlCnt = line[index]
             train["mdlCnt"] = mdlCnt
             index += 1
@@ -174,7 +203,6 @@ class RSdecrypt():
             for j in range(mdlSmfCnt):
                 b = line[index]
                 index += 1
-                #print(line[index:index+b].decode("shift-jis"))
                 train["mdlNames"].append(line[index:index+b].decode("shift-jis"))
                 index += b
 
@@ -199,12 +227,16 @@ class RSdecrypt():
                 index += b
 
             train["pantaNames"].append("なし")
-                
+
+            self.henseiModelEndIndexList.append(index)
+            
             for j in range(4):
                 b = line[index]
                 index += 1
+                train["elseModel"].append(line[index:index+b].decode("shift-jis"))
                 index += b
 
+            self.henseiStartIndexList.append(index)
             #mdlList
             for j in range(mdlCnt):
                 if line[index] == 0xFF:
@@ -228,85 +260,120 @@ class RSdecrypt():
                     train["colList"].append(line[index])
                 index += 1
 
+            self.henseiEndIndexList.append(index)
+            
             for j in range(5):
                 b = line[index]
                 index += 1
-                #print(line[index:index+b])
+                train["else2Model"].append(line[index:index+b].decode("shift-jis"))
                 index += b
 
+            self.else2IndexList.append(index)
+            elseList2 = []
             cnta = line[index]
             index += 1
             b = line[index]
             index += 1
+            name = line[index:index+b].decode("shift-jis")
             index += b
-
+            elseList2.append([cnta, name])
+            
             cntb = line[index]
             index += 1
             b = line[index]
             index += 1
+            name = line[index:index+b].decode("shift-jis")
             index += b
+            elseList2.append([cntb, name])
+
+            train["elseList2"] = elseList2
+
+            self.lensIndexList.append(index)
+            
             lensCnt = line[index]
             index += 1
             
             for j in range(lensCnt):
+                lensList = []
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b]
+                lensName = line[index:index+b].decode("shift-jis")
+                lensList.append(lensName)
                 index += b
-                #print(lensName)
 
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b]
+                lensName = line[index:index+b].decode("shift-jis")
+                lensList.append(lensName)
                 index += b
-                #print(lensName)
 
                 f1 = struct.unpack("<f", line[index:index+4])[0]
+                lensList.append(f1)
                 index += 4
                 f2 = struct.unpack("<f", line[index:index+4])[0]
+                lensList.append(f2)
                 index += 4
-                #print(f1, f2)
 
+                tempList = []
                 for k in range(4):
-                    #print(line[index])
+                    tempList.append(line[index])
                     index += 1
+                lensList.append(tempList)
+                train["lensList"].append(lensList)
+
+            self.tailIndexList.append(index)
+            
             tailCnt = line[index]
             index += 1
-            
+
+            tailList = []
+            tailSmfList = []
             for j in range(tailCnt):
                 b = line[index]
                 index += 1
-                tailName = line[index:index+b]
+                tailSmfName = line[index:index+b].decode("shift-jis")
+                tailSmfList.append(tailSmfName)
                 index += b
-                #print(tailName)
-            #print(line[index])
-            index += 1
-            #print(line[index])
-            index += 1
+            tailList.append(tailSmfList)
             
-            for j in range(2):
+            tailElseList = []
+            for j in range(tailCnt):
+                tailElseList.append(line[index])
+                index += 1
+            tailList.append(tailElseList)
+
+            tailLensList = []
+            for j in range(tailCnt):
+                lensList = []
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b]
+                lensName = line[index:index+b].decode("shift-jis")
+                lensList.append(lensName)
                 index += b
-                #print(lensName)
                 
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b]
+                lensName = line[index:index+b].decode("shift-jis")
+                lensList.append(lensName)
                 index += b
-                #print(lensName)
                 
                 f1 = struct.unpack("<f", line[index:index+4])[0]
+                lensList.append(f1)
                 index += 4
                 f2 = struct.unpack("<f", line[index:index+4])[0]
+                lensList.append(f2)
                 index += 4
-                #print(f1, f2)
 
+                tempList = []
                 for k in range(4):
-                    #print(line[index])
+                    tempList.append(line[index])
                     index += 1
+                lensList.append(tempList)
+                tailLensList.append(lensList)
 
+            self.tailEndIndexList.append(index)
+            train["tailList"] = [tailSmfList, tailElseList, tailLensList]
+            
             self.trainModelList.append(train)
 
         self.colorIdx = index
@@ -389,7 +456,7 @@ class RSdecrypt():
             self.error = traceback.format_exc()
             return False
         
-    def saveTrainInfo(self, trainIdx, varList, trainWidget):
+    def saveTrainInfo(self, trainIdx, varList):
         try:
             newByteArr = bytearray()
 
@@ -398,39 +465,165 @@ class RSdecrypt():
             index += 1
             
             newByteArr = self.byteArr[0:index]
-            notchContentCnt = 4
             
             for i in range(notchCnt):
-                speed = struct.pack("<f", varList[notchContentCnt*i].get())
+                speed = struct.pack("<f", varList[self.notchContentCnt*i].get())
                 newByteArr.extend(speed)
-                index += 4
+                
             for i in range(notchCnt):
-                tlk = struct.pack("<f", varList[notchContentCnt*i+1].get())
+                tlk = struct.pack("<f", varList[self.notchContentCnt*i+1].get())
                 newByteArr.extend(tlk)
-                index += 4
 
             for i in range(notchCnt):
-                sound = struct.pack("<c", varList[notchContentCnt*i+2].get().to_bytes(1, 'big'))
+                sound = struct.pack("<c", varList[self.notchContentCnt*i+2].get().to_bytes(1, 'big'))
                 newByteArr.extend(sound)
-                index += 1
 
             for i in range(notchCnt):
-                add = struct.pack("<f", varList[notchContentCnt*i+3].get())
+                add = struct.pack("<f", varList[self.notchContentCnt*i+3].get())
                 newByteArr.extend(add)
-                index += 4
 
             perfCnt = len(self.trainPerfNameList)
             for i in range(perfCnt):
-                perf = struct.pack("<f", varList[notchCnt*notchContentCnt+i].get())
+                perf = struct.pack("<f", varList[notchCnt*self.notchContentCnt+i].get())
                 newByteArr.extend(perf)
-                index += 4
                     
             for i in range(2):
-                huriko = struct.pack("<c", varList[notchCnt*notchContentCnt+perfCnt+i].get().to_bytes(1, 'big'))
+                huriko = struct.pack("<c", varList[notchCnt*self.notchContentCnt+perfCnt+i].get().to_bytes(1, 'big'))
                 newByteArr.extend(huriko)
-                index += 1
+
+            index = self.mdlIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveHenseiNum(self, trainIdx, num):
+        try:
+            newByteArr = bytearray()
+
+            index = self.henseiStartIndexList[trainIdx]
+            newByteArr = self.byteArr[0:index]
+
+            henseiIndex = self.henseiIndexList[trainIdx]
             
-            modelInfo = self.trainModelList[trainIdx]
+            newByteArr[henseiIndex] = num
+            oldCnt = self.byteArr[henseiIndex]
+
+            #mdlList
+            if num < oldCnt:
+                for j in range(num):
+                    newByteArr.append(self.byteArr[index])
+                    index += 1
+                
+                for j in range(oldCnt - num):
+                    index += 1
+            else:
+                for j in range(oldCnt):
+                    newByteArr.append(self.byteArr[index])
+                    index += 1
+
+                for j in range(num - oldCnt):
+                    newByteArr.append(0)
+                
+            #pantaList
+            if num < oldCnt:
+                for j in range(num):
+                    newByteArr.append(self.byteArr[index])
+                    index += 1
+                
+                for j in range(oldCnt - num):
+                    index += 1
+            else:
+                for j in range(oldCnt):
+                    newByteArr.append(self.byteArr[index])
+                    index += 1
+
+                for j in range(num - oldCnt):
+                    newByteArr.append(0)
+
+            #colList
+            if num < oldCnt:
+                for j in range(num):
+                    newByteArr.append(self.byteArr[index])
+                    index += 1
+
+                for j in range(oldCnt - num):
+                    index += 1
+            else:
+                for j in range(oldCnt):
+                    newByteArr.append(self.byteArr[index])
+                    index += 1
+
+                for j in range(num - oldCnt):
+                    newByteArr.append(0)
+
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+            
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveColor(self, trainIdx, num):
+        try:
+            index = self.colorIdx + trainIdx
+            self.byteArr[index] = num
+            
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveHensei(self, trainIdx, trainWidget):
+        try:
+            index = self.henseiStartIndexList[trainIdx]
+            newByteArr = self.byteArr[0:index]
+
+            henseiIndex = self.henseiIndexList[trainIdx]
+            cnt = self.byteArr[henseiIndex]
+            
+            for i in range(cnt):
+                idx = trainWidget.comboList[3*i].current()
+                if idx == len(trainWidget.comboList[3*i]["values"])-1:
+                    idx = 255
+                newByteArr.append(idx)
+                index += 1
+
+            for i in range(cnt):
+                idx = trainWidget.comboList[3*i+1].current()
+                if idx == len(trainWidget.comboList[3*i+1]["values"])-1:
+                    idx = 255
+                newByteArr.append(idx)
+                index += 1
+
+            for i in range(cnt):
+                idx = trainWidget.comboList[3*i+2].current()
+                if idx == len(trainWidget.comboList[3*i+2]["values"])-1:
+                    idx = 255
+                newByteArr.append(idx)
+                index += 1
+
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+                
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveModelInfo(self, trainIdx, modelInfo):
+        try:
+            index = self.mdlIndexList[trainIdx]
+            newByteArr = self.byteArr[0:index]
+
             newTrackList = modelInfo["trackNames"]
             
             newByteArr.append(len(newTrackList))
@@ -441,118 +634,372 @@ class RSdecrypt():
             newCnt = modelInfo["mdlCnt"]
             newByteArr.append(newCnt)
 
-            newMdlList = trainWidget.comboList[0]
-            newPantaList = trainWidget.comboList[1]
-            newColList = trainWidget.comboList[2]
-
-            newByteArr.append(len(newMdlList["value"])-1)
-            for newMdl in newMdlList["value"]:
+            newMdlList = modelInfo["mdlNames"]
+            newByteArr.append(len(newMdlList)-1)
+            for newMdl in newMdlList:
                 if newMdl == "なし":
                     continue
                 newByteArr.append(len(newMdl))
                 newByteArr.extend(newMdl.encode("shift-jis"))
 
-            newByteArr.append(len(newColList["value"])-1)
-            for newCol in newColList["value"]:
+            newColList = modelInfo["colNames"]
+            newByteArr.append(len(newColList)-1)
+            for newCol in newColList:
                 if newCol == "なし":
                     continue
                 newByteArr.append(len(newCol))
                 newByteArr.extend(newCol.encode("shift-jis"))
-            
-            newByteArr.append(len(newPantaList["value"])-1)
-            for newPanta in newPantaList["value"]:
+
+            newPantaList = modelInfo["pantaNames"]
+            newByteArr.append(len(newPantaList)-1)
+            for newPanta in newPantaList:
                 if newPanta == "なし":
                     continue
                 newByteArr.append(len(newPanta))
                 newByteArr.extend(newPanta.encode("shift-jis"))
-
-###
-            smfTrackCnt = self.byteArr[index]
-            index += 1
-
-            for i in range(smfTrackCnt):
-                b = self.byteArr[index]
-                index += 1
-                index += b
-
-            oldCnt = self.byteArr[index]
-            index += 1
-
-            mdlSmfCnt = self.byteArr[index]
-            index += 1
-            for i in range(mdlSmfCnt):
-                b = self.byteArr[index]
-                index += 1
-                index += b
-
-            colCnt = self.byteArr[index]
-            index += 1
-            for i in range(colCnt):
-                b = self.byteArr[index]
-                index += 1
-                index += b
-
-            pantaCnt = self.byteArr[index]
-            index += 1
-            for i in range(pantaCnt):
-                b = self.byteArr[index]
-                index += 1
-                index += b
-###
-            startIdx = index
-            for i in range(4):
-                b = self.byteArr[index]
-                index += 1
-                index += b
-            newByteArr.extend(self.byteArr[startIdx:index])
-###
-            for i in range(newCnt):
-                idx = trainWidget.comboList[3*i].current()
-                if idx == len(trainWidget.comboList[3*i]["values"])-1:
-                    idx = 255
-                newByteArr.append(idx)
-
-            for i in range(newCnt):
-                idx = trainWidget.comboList[3*i+1].current()
-                if idx == len(trainWidget.comboList[3*i+1]["values"])-1:
-                    idx = 255
-                newByteArr.append(idx)
-
-            for i in range(newCnt):
-                idx = trainWidget.comboList[3*i+2].current()
-                if idx == len(trainWidget.comboList[3*i+2]["values"])-1:
-                    idx = 255
-                newByteArr.append(idx)
                 
-###
-            #mdlList
-            for i in range(oldCnt):
-                index += 1
-            #pantaList
-            for i in range(oldCnt):
-                index += 1
-            #colList
-            for i in range(oldCnt):
-                index += 1
-
-###
-            newIndex = len(newByteArr)
+            index = self.henseiModelEndIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
-            diff = newIndex - index
-            index = newIndex
-###
-            colorCnt = trainWidget.varColor.get()
-            colorIdx = diff + self.colorIdx + trainIdx
-            newByteArr[colorIdx] = colorCnt
-
             self.byteArr = newByteArr
-
+            
             self.saveTrain()
             return True
         except Exception as e:
             self.error = traceback.format_exc()
             return False
 
+    def saveElseList(self, trainIdx, ver, elseList):
+        try:
+            if ver == 1:
+                index = self.henseiModelEndIndexList[trainIdx]
+                newByteArr = self.byteArr[0:index]
+                
+                for i in range(4):
+                    strHex = elseList[i].encode("shift-jis")
+                    newByteArr.append(len(strHex))
+                    newByteArr.extend(strHex)
+                index = self.henseiStartIndexList[trainIdx]
+
+                newByteArr.extend(self.byteArr[index:])
+                self.byteArr = newByteArr
+            elif ver == 2:
+                index = self.henseiEndIndexList[trainIdx]
+                newByteArr = self.byteArr[0:index]
+
+                for i in range(5):
+                    strHex = elseList[i].encode("shift-jis")
+                    newByteArr.append(len(strHex))
+                    newByteArr.extend(strHex)
+                index = self.else2IndexList[trainIdx]
+
+                newByteArr.extend(self.byteArr[index:])
+                self.byteArr = newByteArr
+                
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveElse2List(self, trainIdx, elseList):
+        try:
+            index = self.else2IndexList[trainIdx]
+
+            newByteArr = self.byteArr[0:index]
+
+            for i in range(len(elseList)):
+                elseInfo = elseList[i]
+                num = elseInfo[0]
+                newByteArr.append(num)
+
+                strHex = elseInfo[1].encode("shift-jis")
+                newByteArr.append(len(strHex))
+                newByteArr.extend(strHex)
+
+            index = self.lensIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+                
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveLensCnt(self, trainIdx, cnt):
+        try:
+            index = self.lensIndexList[trainIdx]
+            lensCnt = self.byteArr[index]
+            index += 1
+
+            if cnt > lensCnt:
+                index = self.tailIndexList[trainIdx]
+                newByteArr = self.byteArr[0:index]
+
+                for i in range(cnt - lensCnt):
+                    strHex = "lensflear00.tga".encode("shift-jis")
+                    newByteArr.append(len(strHex))
+                    newByteArr.extend(strHex)
+                    strHex = "lensflear01.tga".encode("shift-jis")
+                    newByteArr.append(len(strHex))
+                    newByteArr.extend(strHex)
+                    
+                    tempF0 = struct.pack("<f", 0)
+                    for j in range(2):
+                        newByteArr.extend(tempF0)
+                    for j in range(4):
+                        newByteArr.append(0)
+            else:
+                for i in range(cnt):
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+                    
+                    for j in range(2):
+                        index += 4
+                    for j in range(4):
+                        index += 1
+                newByteArr = self.byteArr[0:index]
+
+            index = self.tailIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[index:])
+            index = self.lensIndexList[trainIdx]
+            newByteArr[index] = cnt
+
+            self.byteArr = newByteArr
+            
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveLensList(self, trainIdx, valList):
+        try:
+            index = self.lensIndexList[trainIdx]
+            index += 1
+            newByteArr = self.byteArr[0:index]
+
+            for i in range(len(valList)):
+                valInfo = valList[i]
+                for j in range(len(valInfo)):
+                    if j in [0, 1]:
+                        strHex = valInfo[j].encode("shift-jis")
+                        newByteArr.append(len(strHex))
+                        newByteArr.extend(strHex)
+                    elif j in [2, 3]:
+                        tempF = struct.pack("<f", valInfo[j])
+                        newByteArr.extend(tempF)
+                    elif j == 4:
+                        bList = valInfo[j]
+                        for k in range(len(bList)):
+                            newByteArr.append(bList[k])
+
+            index = self.tailIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+                
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveTailCnt(self, trainIdx, cnt):
+        try:
+            index = self.tailIndexList[trainIdx]
+            tailCnt = self.byteArr[index]
+            index += 1
+
+            if cnt > tailCnt:
+                index = self.tailEndIndexList[trainIdx]
+                newByteArr = self.byteArr[0:index]
+
+                index = self.tailIndexList[trainIdx]
+                index += 1
+
+                for i in range(tailCnt):
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+
+                for i in range(cnt - tailCnt):
+                    strHex = ".smf".encode("shift-jis")
+                    newByteArr.insert(index, len(strHex))
+                    index += 1
+                    for s in strHex:
+                        newByteArr.insert(index, s)
+                        index += 1
+
+                for i in range(tailCnt):
+                    index += 1
+
+                for i in range(cnt - tailCnt):
+                    newByteArr.insert(index, 0)
+
+                for i in range(tailCnt):
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+
+                    for j in range(2):
+                        index += 4
+                    for j in range(4):
+                        index += 1
+
+                for i in range(cnt - tailCnt):
+                    strHex = "lensflear00.tga".encode("shift-jis")
+                    newByteArr.insert(index, len(strHex))
+                    index += 1
+                    for s in strHex:
+                        newByteArr.insert(index, s)
+                        index += 1
+
+                    strHex = "lensflear01.tga".encode("shift-jis")
+                    newByteArr.insert(index, len(strHex))
+                    index += 1
+                    for s in strHex:
+                        newByteArr.insert(index, s)
+                        index += 1
+                    
+                    tempF0 = struct.pack("<f", 0)
+                    for j in range(2):
+                        for s in tempF0:
+                            newByteArr.insert(index, s)
+                            index += 1
+                    for j in range(4):
+                        newByteArr.insert(index, 0)
+                        index += 1
+            else:
+                for i in range(cnt):
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+                newByteArr = self.byteArr[0:index]
+
+                for i in range(tailCnt - cnt):
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+
+                startIdx = index
+                for i in range(cnt):
+                    index += 1
+                newByteArr.extend(self.byteArr[startIdx:index])
+
+                for i in range(tailCnt - cnt):
+                    index += 1
+
+                startIdx = index
+                for i in range(cnt):
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+
+                    b = self.byteArr[index]
+                    index += 1
+                    index += b
+
+                    for j in range(2):
+                        index += 4
+                    for j in range(4):
+                        index += 1
+                newByteArr.extend(self.byteArr[startIdx:index])
+
+            index = self.tailEndIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[index:])
+            index = self.tailIndexList[trainIdx]
+            newByteArr[index] = cnt
+
+            self.byteArr = newByteArr
+            
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveTailSmfElse(self, trainIdx, valList):
+        try:
+            index = self.tailIndexList[trainIdx]
+            tailCnt = self.byteArr[index]
+            index += 1
+
+            newByteArr = self.byteArr[0:index]
+            cnt = len(valList) // 2
+            for i in range(cnt):
+                valInfo = valList[i]
+                strHex = valInfo.encode("shift-jis")
+                newByteArr.append(len(strHex))
+                newByteArr.extend(strHex)
+
+                b = self.byteArr[index]
+                index += 1
+                index += b
+
+            for i in range(cnt):
+                valInfo = valList[cnt + i]
+                newByteArr.append(valInfo)
+                
+                index += 1
+
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+            
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def saveTailLensList(self, trainIdx, valList):
+        try:
+            index = self.tailIndexList[trainIdx]
+            tailCnt = self.byteArr[index]
+            index += 1
+
+            for i in range(tailCnt):
+                b = self.byteArr[index]
+                index += 1
+                index += b
+
+            for i in range(tailCnt):
+                index += 1
+            
+            newByteArr = self.byteArr[0:index]
+
+            for i in range(len(valList)):
+                valInfo = valList[i]
+                for j in range(len(valInfo)):
+                    if j in [0, 1]:
+                        strHex = valInfo[j].encode("shift-jis")
+                        newByteArr.append(len(strHex))
+                        newByteArr.extend(strHex)
+                    elif j in [2, 3]:
+                        tempF = struct.pack("<f", valInfo[j])
+                        newByteArr.extend(tempF)
+                    elif j == 4:
+                        bList = valInfo[j]
+                        for k in range(len(bList)):
+                            newByteArr.append(bList[k])
+
+            index = self.tailEndIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[index:])
+            self.byteArr = newByteArr
+                
+            self.saveTrain()
+            return True
+        except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+        
     def saveStageInfo(self, stageList):
         try:
             index = self.stageIdx
@@ -620,97 +1067,6 @@ class RSdecrypt():
                 for n in perf:
                     self.byteArr[idx] = n
                     idx += 1
-            self.saveTrain()
-            return True
-        except Exception as e:
-            self.error = traceback.format_exc()
-            return False
-
-    def copyTrainInfo(self, distIdx, srcList, distList, checkStatusList):
-        srcIndex=  srcList[0]
-        srcNotchNum = srcList[1]
-        srcSpeed = srcList[2]
-        srcPerf = srcList[3]
-        srcHuriko = srcList[4]
-        distIndex = distList[0]
-        distNotchNum = distList[1]
-        distSpeed = distList[2]
-        distPerf = distList[3]
-        distHuriko = distList[4]
-        notchCheckStatus = checkStatusList[0]
-        perfCheckStatus = checkStatusList[1]
-        
-        try:
-            loopCnt = 0
-            if srcNotchNum > distNotchNum:
-                loopCnt = distNotchNum
-            else:
-                loopCnt = srcNotchNum
-                
-            for i in range(len(distPerf)):
-                distPerf[i] = srcPerf[i]
-            for i in range(len(distHuriko)):
-                distHuriko[i] = srcHuriko[i]
-            
-            for i in range(4):
-                for j in range(loopCnt):
-                    distSpeed[i*distNotchNum+j] = srcSpeed[i*srcNotchNum+j]
-
-            index = self.indexList[distIdx]
-            index += 1
-            for i in range(distNotchNum):
-                if notchCheckStatus:
-                    speed = struct.pack("<f", distSpeed[0*distNotchNum+i])
-                    for n in speed:
-                        self.byteArr[index] = n
-                        index += 1
-                else:
-                    index += 4
-            for i in range(distNotchNum):
-                if notchCheckStatus:
-                    tlk = struct.pack("<f", distSpeed[1*distNotchNum+i])
-                    for n in tlk:
-                        self.byteArr[index] = n
-                        index += 1
-                else:
-                    index += 4
-            
-            for i in range(distNotchNum):
-                if notchCheckStatus:
-                    sound = struct.pack("<c", distSpeed[2*distNotchNum+i].to_bytes(1, 'big'))
-                    for n in sound:
-                        self.byteArr[index] = n
-                        index += 1
-                else:
-                    index += 1
-                    
-            for i in range(distNotchNum):
-                if notchCheckStatus:
-                    add = struct.pack("<f", distSpeed[3*distNotchNum+i])
-                    for n in add:
-                        self.byteArr[index] = n
-                        index += 1
-                else:
-                    index += 4
-
-            perfCnt = len(distPerf)
-            for i in range(perfCnt):
-                if perfCheckStatus:
-                    perf = struct.pack("<f", distPerf[i])
-                    for n in perf:
-                        self.byteArr[index] = n
-                        index += 1
-                else:
-                    index += 4
-                    
-            for i in range(2):
-                if perfCheckStatus:
-                    huriko = struct.pack("<c", distHuriko[i].to_bytes(1, 'big'))
-                    for n in huriko:
-                        self.byteArr[index] = n
-                        index += 1
-                else:
-                    index += 1
             self.saveTrain()
             return True
         except Exception as e:
@@ -811,6 +1167,371 @@ class RSdecrypt():
             self.saveTrain()
             return True
         except Exception as e:
+            self.error = traceback.format_exc()
+            return False
+
+    def extractCsvTrainInfo(self, trainIdx, filePath):
+        try:
+            w = open(filePath, "w")
+            speedList = self.trainInfoList[0]
+            index = self.indexList[trainIdx]
+            notchCnt = self.byteArr[index]
+
+            w.write("ノッチ:{0}\n".format(notchCnt))
+            if self.notchContentCnt == 2:
+                w.write("speed,tlk\n")
+            elif self.notchContentCnt == 4:
+                w.write("speed,tlk,sound,add\n")
+            
+            for i in range(notchCnt):
+                for j in range(self.notchContentCnt):
+                    w.write("{0}".format(speedList[i + notchCnt*j]))
+                    if j == self.notchContentCnt - 1:
+                        w.write("\n")
+                    else:
+                        w.write(",")
+            w.write("性能\n")
+            
+            perfList = self.trainInfoList[1]
+            perfNameList = self.trainPerfNameList
+            for i in range(len(perfList)):
+                w.write("{0},{1}\n".format(perfNameList[i], perfList[i]))
+            
+            hurikoList = self.trainInfoList[2]
+            hurikoNameList = self.trainHurikoNameList
+
+            for i in range(len(hurikoList)):
+                w.write("{0},{1}\n".format(hurikoNameList[i], hurikoList[i]))
+
+            train = self.trainModelList[trainIdx]
+            w.write("台車モデル:{0}\n".format(len(train["trackNames"])))
+            w.write(",".join(train["trackNames"]))
+            w.write("\n")
+
+            w.write("編成数:{0}\n".format(train["mdlCnt"]))
+
+            w.write("車両モデル:{0}\n".format(len(train["mdlNames"][:-1])))
+            w.write(",".join(train["mdlNames"][:-1]))
+            w.write("\n")
+
+            w.write("車両index,")
+            w.write(",".join([str(x) for x in train["mdlList"]]))
+            w.write("\n")
+
+            w.write("パンタモデル:{0}\n".format(len(train["pantaNames"][:-1])))
+            w.write(",".join(train["pantaNames"][:-1]))
+            w.write("\n")
+
+            w.write("パンタindex,")
+            w.write(",".join([str(x) for x in train["pantaList"]]))
+            w.write("\n")
+            
+            w.write("COLモデル:{0}\n".format(len(train["colNames"][:-1])))
+            w.write(",".join(train["colNames"][:-1]))
+            w.write("\n")
+
+            w.write("COL_index,")
+            w.write(",".join([str(x) for x in train["colList"]]))
+            
+            w.close()
+            return True
+        except:
+            self.error = traceback.format_exc()
+            return False
+
+    def checkCsvResult(self, csvLines):
+        cnt = 0
+        self.csvReadInfo = {}
+        try:
+            if csvLines[cnt].strip().split(":")[0] != "ノッチ":
+                self.error = "ノッチ情報を探せません"
+                return False
+
+            arr = csvLines[cnt].strip().split(":")[1]
+            
+            notchCnt = int(arr.split(",")[0])
+            if notchCnt not in [4, 5, 12]:
+                self.error = "{0}ノッチは非対応です".format(notchCnt)
+                return False
+            self.csvReadInfo["notchCnt"] = notchCnt
+            cnt += 1
+
+            arr = csvLines[cnt].strip().split(",")[0:4]
+            header = ",".join(arr)
+            if header != "speed,tlk,sound,add":
+                self.error = "ノッチのヘッダーがありません"
+                return False
+            cnt += 1
+            
+            speed = []
+            tlk = []
+            sound = []
+            add = []
+            try:
+                for i in range(notchCnt):
+                    arr = csvLines[cnt].strip().split(",")
+                    speed.append(float(arr[0]))
+                    tlk.append(float(arr[1]))
+                    sound.append(int(arr[2]))
+                    add.append(float(arr[3]))
+                    cnt += 1
+            except:
+                self.error = "{0}ノッチ読み込み中\n{1}ノッチ情報読み込み失敗".format(notchCnt, i+1)
+                return False
+            speed.extend(tlk)
+            speed.extend(sound)
+            speed.extend(add)
+            self.csvReadInfo["speed"] = speed
+
+            if csvLines[cnt].strip().split(",")[0] != "性能":
+                self.error = "性能情報を探せません"
+                return False
+            cnt += 1
+
+            perf = []
+            for i in range(len(self.trainPerfNameList)):
+                arr = csvLines[cnt].strip().split(",")
+                perf.append(float(arr[1]))
+                cnt += 1
+            self.csvReadInfo["perf"] = perf
+                
+            huriko = []
+            for i in range(len(self.trainHurikoNameList)):
+                arr = csvLines[cnt].strip().split(",")
+                huriko.append(int(arr[1]))
+                cnt += 1
+            self.csvReadInfo["huriko"] = huriko
+
+            if csvLines[cnt].strip().split(":")[0] != "台車モデル":
+                self.error = "台車モデル情報を探せません"
+                return False
+
+            arr = csvLines[cnt].strip().split(":")[1]
+            trackCnt = int(arr.split(",")[0])
+            if trackCnt < 2:
+                self.error = "台車モデルの数が2個より少ないです"
+                return False
+            cnt += 1
+
+            trackInfo = []
+            arr = csvLines[cnt].strip().split(",")
+            for i in range(trackCnt):
+                trackInfo.append(arr[i])
+            cnt += 1
+            self.csvReadInfo["trackInfo"] = trackInfo
+
+            if csvLines[cnt].strip().split(":")[0] != "編成数":
+                self.error = "編成数情報を探せません"
+                return False
+
+            arr = csvLines[cnt].strip().split(":")[1]
+            orgCnt = int(arr.split(",")[0])
+            if orgCnt < 2:
+                self.error = "編成数が2個より少ないです"
+                return False
+            cnt += 1
+            self.csvReadInfo["orgCnt"] = orgCnt
+
+            if csvLines[cnt].strip().split(":")[0] != "車両モデル":
+                self.error = "車両モデル情報を探せません"
+                return False
+
+            arr = csvLines[cnt].strip().split(":")[1]
+            mdlCnt = int(arr.split(",")[0])
+            cnt += 1
+
+            mdlNameList = []
+            arr = csvLines[cnt].strip().split(",")
+            for i in range(mdlCnt):
+                mdlNameList.append(arr[i])
+            cnt += 1
+            self.csvReadInfo["mdlNameList"] = mdlNameList
+
+            if csvLines[cnt].strip().split(",")[0] != "車両index":
+                self.error = "車両index情報を探せません"
+                return False
+
+            mdlList = []
+            arr = csvLines[cnt].strip().split(",")[1:]
+            for i in range(orgCnt):
+                try:
+                    idx = int(arr[i])
+                    if idx < -1 or idx >= mdlCnt:
+                        self.error = "車両index情報が不正です"
+                        return False
+                except:
+                    self.error = "車両index情報 読み込み失敗"
+                    return False
+                mdlList.append(idx)
+            cnt += 1
+            self.csvReadInfo["mdlList"] = mdlList
+
+            if csvLines[cnt].strip().split(":")[0] != "パンタモデル":
+                self.error = "パンタモデル情報を探せません"
+                return False
+
+            arr = csvLines[cnt].strip().split(":")[1]
+            pantaCnt = int(arr.split(",")[0])
+            cnt += 1
+
+            pantaNameList = []
+            arr = csvLines[cnt].strip().split(",")
+            for i in range(pantaCnt):
+                pantaNameList.append(arr[i])
+            cnt += 1
+            self.csvReadInfo["pantaNameList"] = pantaNameList
+
+            if csvLines[cnt].strip().split(",")[0] != "パンタindex":
+                self.error = "パンタindex情報を探せません"
+                return False
+
+            pantaList = []
+            arr = csvLines[cnt].strip().split(",")[1:]
+            for i in range(orgCnt):
+                try:
+                    idx = int(arr[i])
+                    if idx < -1 or idx >= pantaCnt:
+                        self.error = "パンタindex情報が不正です"
+                        return False
+                except:
+                    self.error = "パンタindex情報 読み込み失敗"
+                    return False
+                pantaList.append(idx)
+            cnt += 1
+            self.csvReadInfo["pantaList"] = pantaList
+
+            if csvLines[cnt].strip().split(":")[0] != "COLモデル":
+                self.error = "COLモデル情報を探せません"
+                return False
+
+            arr = csvLines[cnt].strip().split(":")[1]
+            colCnt = int(arr.split(",")[0])
+            cnt += 1
+
+            colNameList = []
+            arr = csvLines[cnt].strip().split(",")
+            for i in range(colCnt):
+                colNameList.append(arr[i])
+            cnt += 1
+            self.csvReadInfo["colNameList"] = colNameList
+
+            if csvLines[cnt].strip().split(",")[0] != "COL_index":
+                self.error = "COL_index情報を探せません"
+                return False
+
+            colList = []
+            arr = csvLines[cnt].strip().split(",")[1:]
+            for i in range(orgCnt):
+                try:
+                    idx = int(arr[i])
+                    if idx < -1 or idx >= colCnt:
+                        self.error = "COL_index情報が不正です"
+                        return False
+                except:
+                    self.error = "COL_index情報 読み込み失敗"
+                    return False
+                colList.append(idx)
+            cnt += 1
+            self.csvReadInfo["colList"] = colList
+            
+            return True
+        except:
+            self.error = "{0}行目の読み込み失敗".format(cnt + 1)
+            return False
+        
+    def saveCsvTrainInfo(self, trainIdx):
+        try:
+            index = self.indexList[trainIdx]
+            newByteArr = self.byteArr[0:index]
+
+            notchCnt = self.csvReadInfo["notchCnt"]
+            newByteArr.append(notchCnt)
+
+            speed = self.csvReadInfo["speed"]
+            for i in range(4):
+                for j in range(notchCnt):
+                    if i == 2:
+                        newByteArr.append(speed[i*notchCnt + j])
+                    else:
+                        f = struct.pack("<f", speed[i*notchCnt + j])
+                        newByteArr.extend(f)
+
+            perf = self.csvReadInfo["perf"]
+            for i in range(len(perf)):
+                f = struct.pack("<f", perf[i])
+                newByteArr.extend(f)
+
+            huriko = self.csvReadInfo["huriko"]
+            for i in range(len(huriko)):
+                newByteArr.append(huriko[i])
+
+            trackInfo = self.csvReadInfo["trackInfo"]
+            newByteArr.append(len(trackInfo))
+            for i in range(len(trackInfo)):
+                strHex = trackInfo[i].encode("shift-jis")
+                newByteArr.append(len(strHex))
+                newByteArr.extend(strHex)
+
+            orgCnt = self.csvReadInfo["orgCnt"]
+            newByteArr.append(orgCnt)
+
+            mdlNameList = self.csvReadInfo["mdlNameList"]
+            newByteArr.append(len(mdlNameList))
+            for i in range(len(mdlNameList)):
+                strHex = mdlNameList[i].encode("shift-jis")
+                newByteArr.append(len(strHex))
+                newByteArr.extend(strHex)
+
+            colNameList = self.csvReadInfo["colNameList"]
+            newByteArr.append(len(colNameList))
+            for i in range(len(colNameList)):
+                strHex = colNameList[i].encode("shift-jis")
+                newByteArr.append(len(strHex))
+                newByteArr.extend(strHex)
+
+            pantaNameList = self.csvReadInfo["mdlNameList"]
+            newByteArr.append(len(pantaNameList))
+            for i in range(len(pantaNameList)):
+                strHex = pantaNameList[i].encode("shift-jis")
+                newByteArr.append(len(strHex))
+                newByteArr.extend(strHex)
+                
+            train = self.trainModelList[index]
+            elseModel = train["elseModel"]
+
+            for i in range(4):
+                strHex = elseModel[i].encode("shift-jis")
+                newByteArr.append(len(strHex))
+                newByteArr.extend(strHex)
+
+            mdlList = self.csvReadInfo["mdlList"]
+            for i in range(len(mdlList)):
+                if mdlList[i] == -1:
+                    newByteArr.append(0xFF)
+                else:
+                    newByteArr.append(mdlList[i])
+
+            pantaList = self.csvReadInfo["pantaList"]
+            for i in range(len(mdlList)):
+                if pantaList[i] == -1:
+                    newByteArr.append(0xFF)
+                else:
+                    newByteArr.append(pantaList[i])
+
+            colList = self.csvReadInfo["colList"]
+            for i in range(len(mdlList)):
+                if colList[i] == -1:
+                    newByteArr.append(0xFF)
+                else:
+                    newByteArr.append(colList[i])
+            
+            index = self.henseiEndIndexList[trainIdx]
+            newByteArr.extend(self.byteArr[index:])
+
+            self.byteArr = newByteArr
+            self.saveTrain()
+            return True
+        except:
             self.error = traceback.format_exc()
             return False
         
