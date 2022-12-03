@@ -1173,7 +1173,7 @@ class RSdecrypt():
     def extractCsvTrainInfo(self, trainIdx, filePath):
         try:
             w = open(filePath, "w")
-            speedList = self.trainInfoList[0]
+            speedList = self.trainInfoList[3*trainIdx]
             index = self.indexList[trainIdx]
             notchCnt = self.byteArr[index]
 
@@ -1192,12 +1192,12 @@ class RSdecrypt():
                         w.write(",")
             w.write("性能\n")
             
-            perfList = self.trainInfoList[1]
+            perfList = self.trainInfoList[3*trainIdx+1]
             perfNameList = self.trainPerfNameList
             for i in range(len(perfList)):
                 w.write("{0},{1}\n".format(perfNameList[i], perfList[i]))
             
-            hurikoList = self.trainInfoList[2]
+            hurikoList = self.trainInfoList[3*trainIdx+2]
             hurikoNameList = self.trainHurikoNameList
 
             for i in range(len(hurikoList)):
@@ -1489,14 +1489,14 @@ class RSdecrypt():
                 newByteArr.append(len(strHex))
                 newByteArr.extend(strHex)
 
-            pantaNameList = self.csvReadInfo["mdlNameList"]
+            pantaNameList = self.csvReadInfo["pantaNameList"]
             newByteArr.append(len(pantaNameList))
             for i in range(len(pantaNameList)):
                 strHex = pantaNameList[i].encode("shift-jis")
                 newByteArr.append(len(strHex))
                 newByteArr.extend(strHex)
                 
-            train = self.trainModelList[index]
+            train = self.trainModelList[trainIdx]
             elseModel = train["elseModel"]
 
             for i in range(4):

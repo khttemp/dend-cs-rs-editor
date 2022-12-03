@@ -112,6 +112,7 @@ def saveCsvTrainInfo(trainIdx, decryptFile, reloadFunc):
     result = mb.askokcancel(title="警告", message=warnMsg, icon="warning")
 
     if result:
+        errorMsg = "予想外のエラーです"
         if not decryptFile.saveCsvTrainInfo(trainIdx):
             decryptFile.printError()
             mb.showerror(title="エラー", message=errorMsg)
@@ -178,10 +179,10 @@ def saveTrain(decryptFile, varList, btnList, widgetList, innerButtonList, reload
     mb.showinfo(title="成功", message="車両を改造しました")
     reloadFunc()
 
-def editAllTrain(decryptFile):
-    result = AllEdit(root, "全車両の性能を一括修正", decryptFile)
+def editAllTrain(tabFrame, decryptFile, reloadFunc):
+    result = AllEdit(tabFrame, "全車両の性能を一括修正", decryptFile)
     if result.reloadFlag:
-        reloadFile()
+        reloadFunc()
 
 class AllEdit(sd.Dialog):
     def __init__(self, master, title, decryptFile):
