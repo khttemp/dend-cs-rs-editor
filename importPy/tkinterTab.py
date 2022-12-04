@@ -113,8 +113,9 @@ def tab2AllWidget(tabFrame, decryptFile, trainIdx, game, widgetList, reloadFunc)
 
     elseModel = decryptFile.trainModelList[trainIdx]["elseModel"]
     else2Model = decryptFile.trainModelList[trainIdx]["else2Model"]
-    
-    FixedListWidget(elseFrame, trainIdx, decryptFile, "else1", elseModel, 1, reloadFunc)
+
+    if len(elseModel) > 0:
+        FixedListWidget(elseFrame, trainIdx, decryptFile, "else1", elseModel, 1, reloadFunc)
     FixedListWidget(elseFrame, trainIdx, decryptFile, "else2", else2Model, 2, reloadFunc)
 
     elseFrame2 = ttk.Frame(tabFrame)

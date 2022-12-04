@@ -22,8 +22,13 @@ class TrainModelWidget():
         
         edit_hensei_button = innerButtonList[3]
         edit_hensei_button["command"] = lambda : self.editHenseiTrain(widgetList, innerButtonList, reloadFunc)
-        edit_model_button = innerButtonList[4]
-        edit_model_button["command"] = lambda : self.editModel()
+
+        if self.game not in [LS, BS]:
+            edit_model_button = innerButtonList[4]
+            edit_model_button["command"] = lambda : self.editModel()
+        else:
+            edit_model_button = innerButtonList[4]
+            edit_model_button.destroy()
         
         modelInfo = self.decryptFile.trainModelList[self.trainIdx]
 
@@ -93,13 +98,15 @@ class TrainModelWidget():
         henseiBtn = innerButtonList[1]
         colorBtn = innerButtonList[2]
         edit_hensei_button = innerButtonList[3]
-        edit_model_button = innerButtonList[4]
             
         notchBtn["state"] = "disabled"
         henseiBtn["state"] = "disabled"
         colorBtn["state"] = "disabled"
         edit_hensei_button["command"] = lambda : self.saveHenseiTrain(widgetList, reloadFunc)
-        edit_model_button["state"] = "disabled"
+        
+        if self.game not in [LS, BS]:
+            edit_model_button = innerButtonList[4]
+            edit_model_button["state"] = "disabled"
 
         for combo in self.comboList:
             combo["state"] = "readonly"
@@ -132,21 +139,13 @@ class TrainModelWidget():
         self.reloadFunc()
 
     def editModel(self):
-        if self.game not in [LS, BS]:
-            result = EditModelInfo(self.root, "モデル情報修正", self.trainIdx, self.decryptFile, self)
-            if result.reloadFlag:
-                self.reloadFunc()
-        else:
-            title = ""
-            if self.game == LS:
-                title = "LS"
-            else:
-                title = "BS"
-            errorMsg = "{0}はモデル修正をサポートしません".format(title)
-            mb.showerror(title="エラー", message=errorMsg)
+        result = EditModelInfo(self.root, "モデル情報修正", self.game, self.trainIdx, self.decryptFile, self)
+        if result.reloadFlag:
+            self.reloadFunc()
 
 class EditModelInfo(sd.Dialog):
-    def __init__(self, master, title, trainIdx, decryptFile, trainWidget):
+    def __init__(self, master, title, game, trainIdx, decryptFile, trainWidget):
+        self.game = game
         self.trainIdx = trainIdx
         self.decryptFile = decryptFile
         self.trainWidget = trainWidget
@@ -282,9 +281,14 @@ class EditModelInfo(sd.Dialog):
         
         if self.selectListNum == 0:
             selectName = "台車モデル"
-            if self.trackModelList.size() <= 2:
-                mb.showerror(title="エラー", message="台車モデルは2個以上である必要あります")
-                return
+            if self.game <= BS:
+                if self.trackModelList.size() <= 1:
+                    mb.showerror(title="エラー", message="台車モデルは1個以上である必要あります")
+                    return
+            else:
+                if self.trackModelList.size() <= 2:
+                    mb.showerror(title="エラー", message="台車モデルは2個以上である必要あります")
+                    return
         elif self.selectListNum == 1:
             selectName = "車両モデル"
             for i in range(self.henseiCnt):

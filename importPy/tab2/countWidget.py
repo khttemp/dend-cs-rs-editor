@@ -97,10 +97,9 @@ class CountWidget():
         if self.game in [LS, BS]:
             title = ""
             if self.game == LS:
-                title = "LS"
+                errorMsg = "LSはカラー数修正をサポートしません"
             else:
-                title = "BS"
-            errorMsg = "{0}はカラー修正をサポートしません".format(title)
+                errorMsg = "BSカラー修正はCSVで行ってください"
             mb.showerror(title="エラー", message=errorMsg)
             return
         result = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=value)
@@ -131,18 +130,6 @@ class CountWidget():
             except Exception:
                 errorMsg = "予想外のエラーです"
                 mb.showerror(title="エラー", message=errorMsg)
-    
-    def editModel(self):
-        if self.game not in [LS, BS]:
-            EditModelInfo(self.root, "モデル情報修正", self.cbIdx, self.decryptFile, self)
-        else:
-            title = ""
-            if self.game == LS:
-                title = "LS"
-            else:
-                title = "BS"
-            errorMsg = "{0}はモデル修正をサポートしません".format(title)
-            mb.showerror(title="エラー", message=errorMsg)
 
 class EditNotchInfo(sd.Dialog):
     def __init__(self, master, title, trainIdx, game, decryptFile, notchContentCnt):
