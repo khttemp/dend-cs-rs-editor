@@ -143,7 +143,7 @@ def initSelect():
     cb.current(0)
     cb["state"] = "readonly"
 
-    menuCb["values"] = ["速度・性能情報", "数・モデル情報", "レンズフレア"]
+    menuCb["values"] = ["速度・性能情報", "数・モデル情報", "レンズフレア情報"]
     menuCb.current(0)
     menuCb["state"] = "readonly"
     selectInfo(cb.current(), menuCb.current())

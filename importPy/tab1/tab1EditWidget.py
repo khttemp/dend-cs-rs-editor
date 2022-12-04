@@ -130,6 +130,7 @@ def editTrain(decryptFile, varList, btnList, widgetList, innerButtonList, reload
     extract_csv_train_info_button = innerButtonList[1]
     save_csv_train_info_button = innerButtonList[2]
     edit_button = innerButtonList[3]
+    edit_all_button = innerButtonList[4]
     
     v_edit.set("保存する")
     for btn in btnList:
@@ -143,6 +144,7 @@ def editTrain(decryptFile, varList, btnList, widgetList, innerButtonList, reload
     set_default_train_info_button["state"] = "disabled"
     extract_csv_train_info_button["state"] = "disabled"
     save_csv_train_info_button["state"] = "disabled"
+    edit_all_button["state"] = "disabled"
 
 def saveTrain(decryptFile, varList, btnList, widgetList, innerButtonList, reloadFunc):
     v_edit = widgetList[0]
