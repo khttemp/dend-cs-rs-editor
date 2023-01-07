@@ -241,7 +241,7 @@ pyinstaller か py2exe ライブラリをインストールする。 pip でも 
 下は、 pyinstaller を使用して、Windows 版実行バイナリ（ .exeファイル ）を作る例である。
 
 ````
-> pyinstaller editor.py --onefile
+> pyinstaller editor.py --onefile --add-data "./dendData/*;./"
 （ コンソール出力は省略 ）
 ````
 

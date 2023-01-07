@@ -3,6 +3,7 @@
 import struct
 import os
 import sys
+import codecs
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog as fd
@@ -46,7 +47,7 @@ def defaultDataRead(game):
     elif game == RS:
         path = resource_path("RSdata.txt")
 
-    f = open(path)
+    f = codecs.open(path, "r", "utf-8", "ignore")
     lines = f.readlines()
     f.close()
 
@@ -226,7 +227,7 @@ def editStageTrain():
     EditStageInfo(root, "ステージ情報修正", game, decryptFile)
 
 root = Tk()
-root.title("電車でD LBCR 性能改造 1.8.0")
+root.title("電車でD LBCR 性能改造 1.8.1")
 root.geometry("1024x768")
 
 menubar = Menu(root)
