@@ -2,6 +2,7 @@
 
 import struct
 import traceback
+import codecs
 
 LSTrainName = [
     "H2000",
@@ -54,6 +55,7 @@ perfName = [
 
 hurikoName = ""
 
+
 class LSdecrypt():
     def __init__(self, filePath):
         self.filePath = filePath
@@ -86,13 +88,15 @@ class LSdecrypt():
             self.decrypt(line)
             self.byteArr = bytearray(line)
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
+
     def printError(self):
         f = open("error_log.txt", "w")
         f.write(self.error)
         f.close()
+
     def decrypt(self, line):
         self.trainInfoList = []
         self.indexList = []
@@ -107,7 +111,7 @@ class LSdecrypt():
         self.tailEndIndexList = []
         self.error = ""
         self.trainModelList = []
-        
+
         index = 0
         trainCnt = line[index]
         index += 1
@@ -115,7 +119,8 @@ class LSdecrypt():
         for i in range(trainCnt):
             trainNameCnt = line[index]
             index += 1
-            trainName = line[index:index+trainNameCnt].decode("shift-jis")
+            # trainName
+            line[index:index + trainNameCnt].decode("shift-jis")
             index += trainNameCnt
 
             self.indexList.append(index)
@@ -124,7 +129,7 @@ class LSdecrypt():
             index += 1
             for j in range(2):
                 for k in range(notchCnt):
-                    speed = struct.unpack("<f", line[index:index+4])[0]
+                    speed = struct.unpack("<f", line[index:index + 4])[0]
                     speed = round(speed, 4)
                     train_speed.append(speed)
                     index += 4
@@ -132,30 +137,30 @@ class LSdecrypt():
 
             train_perf = []
             for j in range(len(perfName)):
-                perf = struct.unpack("<f", line[index:index+4])[0]
+                perf = struct.unpack("<f", line[index:index + 4])[0]
                 perf = round(perf, 5)
                 train_perf.append(perf)
                 index += 4
             self.trainInfoList.append(train_perf)
 
             self.mdlIndexList.append(index)
-            
+
             train = {
-                "daishaCnt":0,
-                "trackNames":[],
-                "mdlCnt":0,
-                "mdlNames":[],
-                "colNames":[],
-                "pantaNames":[],
-                "mdlList":[],
-                "pantaList":[],
-                "colList":[],
-                "colorCnt":0,
-                "elseModel":[],
-                "else2Model":[],
-                "elseList2":[],
-                "lensList":[],
-                "tailList":[],
+                "daishaCnt": 0,
+                "trackNames": [],
+                "mdlCnt": 0,
+                "mdlNames": [],
+                "colNames": [],
+                "pantaNames": [],
+                "mdlList": [],
+                "pantaList": [],
+                "colList": [],
+                "colorCnt": 0,
+                "elseModel": [],
+                "else2Model": [],
+                "elseList2": [],
+                "lensList": [],
+                "tailList": [],
             }
 
             daishaCnt = line[index]
@@ -164,54 +169,54 @@ class LSdecrypt():
 
             daishaModelNameCnt = line[index]
             index += 1
-            daishaModelName = line[index:index+daishaModelNameCnt].decode("shift-jis")
+            daishaModelName = line[index:index + daishaModelNameCnt].decode("shift-jis")
             train["trackNames"].append(daishaModelName)
             index += daishaModelNameCnt
 
             self.henseiIndexList.append(index)
-            
+
             henseiCnt = line[index]
             train["mdlCnt"] = henseiCnt
             index += 1
 
-            #LSはモデル3つ固定
+            # LSはモデル3つ固定
             for j in range(3):
                 modelNameCnt = line[index]
                 index += 1
-                modelName = line[index:index+modelNameCnt].decode("shift-jis")
+                modelName = line[index:index + modelNameCnt].decode("shift-jis")
                 train["mdlNames"].append(modelName)
                 index += modelNameCnt
 
-            #LSはCOLも3つ固定
+            # LSはCOLも3つ固定
             for j in range(3):
                 colNameCnt = line[index]
                 index += 1
-                colName = line[index:index+colNameCnt].decode("shift-jis")
+                colName = line[index:index + colNameCnt].decode("shift-jis")
                 train["colNames"].append(colName)
                 index += colNameCnt
 
-            #LSは固定で自動編成
+            # LSは固定で自動編成
             for i in range(henseiCnt):
                 train["mdlList"].append(1)
             train["mdlList"][0] = 0
-            train["mdlList"][-1] = len(train["mdlNames"])-1
+            train["mdlList"][-1] = len(train["mdlNames"]) - 1
 
             self.henseiStartIndexList.append(index)
-            
+
             pantaModelCnt = line[index]
             index += 1
 
-            #86、新幹線はパンタなし
+            # 86、新幹線はパンタなし
             if pantaModelCnt > 0:
                 for j in range(pantaModelCnt):
                     pantaModelNameCnt = line[index]
                     index += 1
-                    pantaModelName = line[index:index+pantaModelNameCnt].decode("shift-jis")
+                    pantaModelName = line[index:index + pantaModelNameCnt].decode("shift-jis")
                     train["pantaNames"].append(pantaModelName)
                     index += pantaModelNameCnt
 
                 train["pantaNames"].append("なし")
-                
+
                 for j in range(henseiCnt):
                     idx = line[index]
                     if idx == 0xFF:
@@ -219,9 +224,9 @@ class LSdecrypt():
                     else:
                         train["pantaList"].append(idx)
                     index += 1
-                    
+
             self.henseiEndIndexList.append(index)
-            
+
             for j in range(9):
                 idx = line[index]
                 if idx == 0xFF:
@@ -230,44 +235,44 @@ class LSdecrypt():
                 index += 1
 
             self.else2IndexList.append(index)
-            
+
             for j in range(4):
                 seLen = line[index]
                 index += 1
-                seFileName = line[index:index+seLen].decode("shift-jis")
+                seFileName = line[index:index + seLen].decode("shift-jis")
                 train["else2Model"].append(seFileName)
                 index += seLen
 
             seLen = line[index]
             index += 1
-            seFileName = line[index:index+seLen].decode("shift-jis")
+            seFileName = line[index:index + seLen].decode("shift-jis")
             train["else2Model"].append(seFileName)
             index += seLen
-            tempF = struct.unpack("<f", line[index:index+4])[0]
+            tempF = struct.unpack("<f", line[index:index + 4])[0]
             tempF = "{0}".format(round(tempF, 4))
             train["else2Model"].append(tempF)
             index += 4
 
             sstLen = line[index]
             index += 1
-            sstFileName = line[index:index+sstLen].decode("shift-jis")
+            sstFileName = line[index:index + sstLen].decode("shift-jis")
             train["else2Model"].append(sstFileName)
             index += sstLen
 
             seLen = line[index]
             index += 1
-            seFileName = line[index:index+seLen].decode("shift-jis")
+            seFileName = line[index:index + seLen].decode("shift-jis")
             train["else2Model"].append(seFileName)
             index += seLen
 
             self.elseList2IndexList.append(index)
-            
+
             for j in range(2):
                 seFileCnt = line[index]
                 index += 1
                 seLen = line[index]
                 index += 1
-                seFileName = line[index:index+seLen].decode("shift-jis")
+                seFileName = line[index:index + seLen].decode("shift-jis")
                 index += seLen
                 train["elseList2"].append([seFileCnt, seFileName])
 
@@ -279,20 +284,20 @@ class LSdecrypt():
                 lensList = []
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b].decode("shift-jis")
+                lensName = line[index:index + b].decode("shift-jis")
                 lensList.append(lensName)
                 index += b
 
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b].decode("shift-jis")
+                lensName = line[index:index + b].decode("shift-jis")
                 lensList.append(lensName)
                 index += b
 
-                f1 = struct.unpack("<f", line[index:index+4])[0]
+                f1 = struct.unpack("<f", line[index:index + 4])[0]
                 lensList.append(f1)
                 index += 4
-                f2 = struct.unpack("<f", line[index:index+4])[0]
+                f2 = struct.unpack("<f", line[index:index + 4])[0]
                 lensList.append(f2)
                 index += 4
 
@@ -304,7 +309,7 @@ class LSdecrypt():
                 train["lensList"].append(lensList)
 
             self.tailIndexList.append(index)
-                
+
             tailCnt = line[index]
             index += 1
 
@@ -313,7 +318,7 @@ class LSdecrypt():
             for j in range(tailCnt):
                 b = line[index]
                 index += 1
-                tailSmfName = line[index:index+b].decode("shift-jis")
+                tailSmfName = line[index:index + b].decode("shift-jis")
                 tailSmfList.append(tailSmfName)
                 index += b
             tailList.append(tailSmfList)
@@ -329,20 +334,20 @@ class LSdecrypt():
                 lensList = []
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b].decode("shift-jis")
+                lensName = line[index:index + b].decode("shift-jis")
                 lensList.append(lensName)
                 index += b
-                
+
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b].decode("shift-jis")
+                lensName = line[index:index + b].decode("shift-jis")
                 lensList.append(lensName)
                 index += b
-                
-                f1 = struct.unpack("<f", line[index:index+4])[0]
+
+                f1 = struct.unpack("<f", line[index:index + 4])[0]
                 lensList.append(f1)
                 index += 4
-                f2 = struct.unpack("<f", line[index:index+4])[0]
+                f2 = struct.unpack("<f", line[index:index + 4])[0]
                 lensList.append(f2)
                 index += 4
 
@@ -357,11 +362,12 @@ class LSdecrypt():
             train["tailList"] = [tailSmfList, tailElseList, tailLensList]
 
             self.trainModelList.append(train)
+
     def saveNotchInfo(self, trainIdx, newNotchNum):
         try:
             newByteArr = bytearray()
             index = self.indexList[trainIdx]
-            speed = self.trainInfoList[2*trainIdx]
+            speed = self.trainInfoList[2 * trainIdx]
             notchContentCnt = 2
             oldNotchNum = len(speed) // notchContentCnt
 
@@ -377,15 +383,15 @@ class LSdecrypt():
                         newSpeed.append(speed[oldNotchNum * i + j])
                     for j in range(diff):
                         newSpeed.append(0)
-            
+
             newByteArr.extend(self.byteArr[0:index])
             newByteArr.append(newNotchNum)
             index += 1
-            
+
             for i in range(len(newSpeed)):
                 byteF = struct.pack("<f", newSpeed[i])
                 newByteArr.extend(byteF)
-            
+
             for i in range(len(speed)):
                 index += 4
 
@@ -394,38 +400,39 @@ class LSdecrypt():
 
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
+
     def saveTrainInfo(self, trainIdx, varList):
         try:
             index = self.indexList[trainIdx]
             notchCnt = self.byteArr[index]
             index += 1
-            
+
             newByteArr = self.byteArr[0:index]
-            
+
             for i in range(notchCnt):
-                speed = struct.pack("<f", varList[self.notchContentCnt*i].get())
+                speed = struct.pack("<f", varList[self.notchContentCnt * i].get())
                 newByteArr.extend(speed)
-                
+
             for i in range(notchCnt):
-                tlk = struct.pack("<f", varList[self.notchContentCnt*i+1].get())
+                tlk = struct.pack("<f", varList[self.notchContentCnt * i + 1].get())
                 newByteArr.extend(tlk)
 
             perfCnt = len(self.trainPerfNameList)
             for i in range(perfCnt):
-                perf = struct.pack("<f", varList[notchCnt*self.notchContentCnt+i].get())
+                perf = struct.pack("<f", varList[notchCnt * self.notchContentCnt + i].get())
                 newByteArr.extend(perf)
-                
+
             index = self.mdlIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
 
             self.saveTrain()
             return True
-        except Exception as e:
-            self.error = str(e)
+        except Exception:
+            self.error = traceback.format_exc()
             return False
 
     def saveHenseiNum(self, trainIdx, num):
@@ -436,15 +443,15 @@ class LSdecrypt():
             newByteArr = self.byteArr[0:index]
 
             henseiIndex = self.henseiIndexList[trainIdx]
-            
+
             newByteArr[henseiIndex] = num
             oldCnt = self.byteArr[henseiIndex]
 
             pantaModelCnt = self.byteArr[index]
             newByteArr.append(pantaModelCnt)
             index += 1
-            
-            #pantaList
+
+            # pantaList
             if pantaModelCnt > 0:
                 startIdx = index
                 for j in range(pantaModelCnt):
@@ -453,12 +460,12 @@ class LSdecrypt():
                     index += b
 
                 newByteArr.extend(self.byteArr[startIdx:index])
-                    
+
                 if num < oldCnt:
                     for j in range(num):
                         newByteArr.append(self.byteArr[index])
                         index += 1
-                    
+
                     for j in range(oldCnt - num):
                         index += 1
                 else:
@@ -471,10 +478,10 @@ class LSdecrypt():
 
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -497,20 +504,20 @@ class LSdecrypt():
                     index += 1
                     index += b
                 newByteArr.extend(self.byteArr[startIdx:index])
-                    
+
                 for i in range(cnt):
-                    idx = trainWidget.comboList[2*i+1].current()
-                    if idx == len(trainWidget.comboList[2*i+1]["values"])-1:
+                    idx = trainWidget.comboList[2 * i + 1].current()
+                    if idx == len(trainWidget.comboList[2 * i + 1]["values"]) - 1:
                         idx = 255
                     newByteArr.append(idx)
                     index += 1
 
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -528,7 +535,7 @@ class LSdecrypt():
                     index += 1
                 newByteArr.extend(self.byteArr[index:])
                 self.byteArr = newByteArr
-                
+
             elif ver == 2:
                 index = self.else2IndexList[trainIdx]
                 newByteArr = self.byteArr[0:index]
@@ -545,10 +552,10 @@ class LSdecrypt():
 
                 newByteArr.extend(self.byteArr[index:])
                 self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -570,10 +577,10 @@ class LSdecrypt():
             index = self.lensIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -594,7 +601,7 @@ class LSdecrypt():
                     strHex = "lensflear01.tga".encode("shift-jis")
                     newByteArr.append(len(strHex))
                     newByteArr.extend(strHex)
-                    
+
                     tempF0 = struct.pack("<f", 0)
                     for j in range(2):
                         newByteArr.extend(tempF0)
@@ -608,7 +615,7 @@ class LSdecrypt():
                     b = self.byteArr[index]
                     index += 1
                     index += b
-                    
+
                     for j in range(2):
                         index += 4
                     for j in range(4):
@@ -621,10 +628,10 @@ class LSdecrypt():
             newByteArr[index] = cnt
 
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -652,10 +659,10 @@ class LSdecrypt():
             index = self.tailIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -719,7 +726,7 @@ class LSdecrypt():
                     for s in strHex:
                         newByteArr.insert(index, s)
                         index += 1
-                    
+
                     tempF0 = struct.pack("<f", 0)
                     for j in range(2):
                         for s in tempF0:
@@ -770,17 +777,18 @@ class LSdecrypt():
             newByteArr[index] = cnt
 
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
     def saveTailSmfElse(self, trainIdx, valList):
         try:
             index = self.tailIndexList[trainIdx]
-            tailCnt = self.byteArr[index]
+            # tailCnt
+            self.byteArr[index]
             index += 1
 
             newByteArr = self.byteArr[0:index]
@@ -798,15 +806,15 @@ class LSdecrypt():
             for i in range(cnt):
                 valInfo = valList[cnt + i]
                 newByteArr.append(valInfo)
-                
+
                 index += 1
 
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -823,7 +831,7 @@ class LSdecrypt():
 
             for i in range(tailCnt):
                 index += 1
-            
+
             newByteArr = self.byteArr[0:index]
 
             for i in range(len(valList)):
@@ -844,29 +852,29 @@ class LSdecrypt():
             index = self.tailEndIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
-        
+
     def saveAllEdit(self, perfIndex, num, calcIndex):
         try:
             for index in self.indexList:
                 idx = index
                 notchCnt = self.byteArr[index]
                 idx += 1
-                #speed
+                # speed
                 for i in range(notchCnt):
                     idx += 4
-                #tlk
+                # tlk
                 for i in range(notchCnt):
                     idx += 4
 
-                idx = idx + 4*perfIndex
+                idx = idx + 4 * perfIndex
 
-                originPerf = struct.unpack("<f", self.byteArr[idx:idx+4])[0]
+                originPerf = struct.unpack("<f", self.byteArr[idx:idx + 4])[0]
                 if calcIndex == 0:
                     originPerf *= num
                 else:
@@ -878,7 +886,7 @@ class LSdecrypt():
                     idx += 1
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -890,7 +898,7 @@ class LSdecrypt():
         distNotchNum = len(distData["notch"])
         notchCheckStatus = checkStatusList[0]
         perfCheckStatus = checkStatusList[1]
-        
+
         try:
             loopCnt = 0
             if srcNotchNum > distNotchNum:
@@ -903,19 +911,19 @@ class LSdecrypt():
 
             for i in range(len(srcPerf)):
                 srcPerf[i] = distData["att"][i]
-            
+
             for i in range(2):
                 if i == 0:
                     data = distData["notch"]
                 elif i == 1:
                     data = distData["tlk"]
-                    
+
                 for j in range(loopCnt):
-                    srcSpeed[i*srcNotchNum+j] = data[j]
-                    
+                    srcSpeed[i * srcNotchNum + j] = data[j]
+
             for i in range(srcNotchNum):
                 if notchCheckStatus:
-                    speed = struct.pack("<f", srcSpeed[0*srcNotchNum+i])
+                    speed = struct.pack("<f", srcSpeed[0 * srcNotchNum + i])
                     for n in speed:
                         self.byteArr[index] = n
                         index += 1
@@ -923,7 +931,7 @@ class LSdecrypt():
                     index += 4
             for i in range(srcNotchNum):
                 if notchCheckStatus:
-                    tlk = struct.pack("<f", srcSpeed[1*srcNotchNum+i])
+                    tlk = struct.pack("<f", srcSpeed[1 * srcNotchNum + i])
                     for n in tlk:
                         self.byteArr[index] = n
                         index += 1
@@ -938,37 +946,37 @@ class LSdecrypt():
                         index += 1
                 else:
                     index += 4
-                    
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
     def extractCsvTrainInfo(self, trainIdx, filePath):
         try:
-            w = open(filePath, "w")
-            speedList = self.trainInfoList[2*trainIdx]
+            w = codecs.open(filePath, "w", "utf-8-sig", "ignore")
+            speedList = self.trainInfoList[2 * trainIdx]
             index = self.indexList[trainIdx]
             notchCnt = self.byteArr[index]
 
             w.write("ノッチ:{0}\n".format(notchCnt))
             w.write("speed,tlk\n")
-            
+
             for i in range(notchCnt):
                 for j in range(self.notchContentCnt):
-                    w.write("{0}".format(speedList[i + notchCnt*j]))
+                    w.write("{0}".format(speedList[i + notchCnt * j]))
                     if j == self.notchContentCnt - 1:
                         w.write("\n")
                     else:
                         w.write(",")
             w.write("性能\n")
-            
-            perfList = self.trainInfoList[2*trainIdx+1]
+
+            perfList = self.trainInfoList[2 * trainIdx + 1]
             perfNameList = self.trainPerfNameList
             for i in range(len(perfList)):
                 w.write("{0},{1}\n".format(perfNameList[i], perfList[i]))
-            
+
             train = self.trainModelList[trainIdx]
             w.write("台車モデル:{0}\n".format(train["daishaCnt"]))
             w.write(",".join(train["trackNames"]))
@@ -976,12 +984,12 @@ class LSdecrypt():
 
             w.write("編成数:{0}\n".format(train["mdlCnt"]))
 
-            mdlCnt = len(train["mdlNames"])
+            # mdlCnt = len(train["mdlNames"])
             w.write("車両モデル\n")
             w.write(",".join(train["mdlNames"]))
             w.write("\n")
 
-            colCnt = len(train["colNames"])
+            # colCnt = len(train["colNames"])
             w.write("COLモデル\n")
             w.write(",".join(train["colNames"]))
             w.write("\n")
@@ -1000,7 +1008,7 @@ class LSdecrypt():
             w.write("属性index,")
             w.write(",".join([str(x) for x in train["elseModel"]]))
             w.write("\n")
-                
+
             w.write("レンズフレア:{0}\n".format(len(train["lensList"])))
             for i in range(len(train["lensList"])):
                 lensInfo = train["lensList"][i]
@@ -1024,7 +1032,7 @@ class LSdecrypt():
 
             w.close()
             return True
-        except:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -1037,7 +1045,7 @@ class LSdecrypt():
                 return False
 
             arr = csvLines[cnt].strip().split(":")[1]
-            
+
             notchCnt = int(arr.split(",")[0])
             if notchCnt not in [3, 4, 5]:
                 self.error = "{0}ノッチは非対応です".format(notchCnt)
@@ -1051,7 +1059,7 @@ class LSdecrypt():
                 self.error = "ノッチのヘッダーがありません"
                 return False
             cnt += 1
-            
+
             speed = []
             tlk = []
             try:
@@ -1060,8 +1068,8 @@ class LSdecrypt():
                     speed.append(float(arr[0]))
                     tlk.append(float(arr[1]))
                     cnt += 1
-            except:
-                self.error = "{0}ノッチ読み込み中\n{1}ノッチ情報読み込み失敗".format(notchCnt, i+1)
+            except Exception:
+                self.error = "{0}ノッチ読み込み中\n{1}ノッチ情報読み込み失敗".format(notchCnt, i + 1)
                 return False
             speed.extend(tlk)
             self.csvReadInfo["speed"] = speed
@@ -1085,7 +1093,7 @@ class LSdecrypt():
             daishaCnt = int(arr.split(",")[0])
             self.csvReadInfo["daishaCnt"] = daishaCnt
             cnt += 1
-            
+
             trackInfo = []
             arr = csvLines[cnt].strip().split(",")
             trackInfo.append(arr[0])
@@ -1107,7 +1115,7 @@ class LSdecrypt():
             if csvLines[cnt].strip().split(",")[0] != "車両モデル":
                 self.error = "車両モデル情報を探せません"
                 return False
-            
+
             mdlCnt = 3
             cnt += 1
 
@@ -1131,7 +1139,7 @@ class LSdecrypt():
                 colNameList.append(arr[i])
             cnt += 1
             self.csvReadInfo["colNameList"] = colNameList
-            
+
             if csvLines[cnt].strip().split(":")[0] != "パンタモデル":
                 self.error = "パンタモデル情報を探せません"
                 return False
@@ -1161,7 +1169,7 @@ class LSdecrypt():
                         if idx < -1 or idx >= pantaCnt:
                             self.error = "パンタindex情報が不正です"
                             return False
-                    except:
+                    except Exception:
                         self.error = "パンタindex情報 読み込み失敗"
                         return False
                     pantaList.append(idx)
@@ -1212,7 +1220,7 @@ class LSdecrypt():
 
                 lensList.append(lensInfo)
             self.csvReadInfo["lensList"] = lensList
-            
+
             if csvLines[cnt].strip().split(":")[0] != "テールランプ":
                 self.error = "テールランプ情報を探せません"
                 return False
@@ -1220,7 +1228,7 @@ class LSdecrypt():
             arr = csvLines[cnt].strip().split(":")[1]
             tailCnt = int(arr.split(",")[0])
             cnt += 1
-            
+
             tailList = []
             tailSmfNameList = []
             arr = csvLines[cnt].strip().split(",")
@@ -1262,17 +1270,16 @@ class LSdecrypt():
                 tailLensList.append(lensInfo)
             tailList.append(tailLensList)
             self.csvReadInfo["tailList"] = tailList
-                
+
             return True
-        except:
+        except Exception:
             self.error = "{0}行目の読み込み失敗".format(cnt + 1)
             return False
-        
+
     def saveCsvTrainInfo(self, trainIdx):
         try:
             index = self.indexList[trainIdx]
             newByteArr = self.byteArr[0:index]
-            train = self.trainModelList[trainIdx]
 
             notchCnt = self.csvReadInfo["notchCnt"]
             newByteArr.append(notchCnt)
@@ -1280,14 +1287,14 @@ class LSdecrypt():
             speed = self.csvReadInfo["speed"]
             for i in range(2):
                 for j in range(notchCnt):
-                    f = struct.pack("<f", speed[i*notchCnt + j])
+                    f = struct.pack("<f", speed[i * notchCnt + j])
                     newByteArr.extend(f)
 
             perf = self.csvReadInfo["perf"]
             for i in range(len(perf)):
                 f = struct.pack("<f", perf[i])
                 newByteArr.extend(f)
-                
+
             daishaCnt = self.csvReadInfo["daishaCnt"]
             newByteArr.append(daishaCnt)
 
@@ -1299,7 +1306,7 @@ class LSdecrypt():
 
             orgCnt = self.csvReadInfo["orgCnt"]
             newByteArr.append(orgCnt)
-            
+
             mdlNameList = self.csvReadInfo["mdlNameList"]
             for i in range(len(mdlNameList)):
                 strHex = mdlNameList[i].encode("shift-jis")
@@ -1314,7 +1321,7 @@ class LSdecrypt():
 
             pantaCnt = self.csvReadInfo["pantaCnt"]
             newByteArr.append(pantaCnt)
-            
+
             if pantaCnt > 0:
                 pantaNameList = self.csvReadInfo["pantaNameList"]
                 for i in range(len(pantaNameList)):
@@ -1386,14 +1393,14 @@ class LSdecrypt():
 
             index = self.tailEndIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
-            
+
             self.byteArr = newByteArr
             self.saveTrain()
             return True
-        except:
+        except Exception:
             self.error = traceback.format_exc()
             return False
-        
+
     def saveTrain(self):
         w = open(self.filePath, "wb")
         w.write(self.byteArr)

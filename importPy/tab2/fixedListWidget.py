@@ -1,9 +1,10 @@
 from functools import partial
 
-from tkinter import *
+import tkinter
 from tkinter import ttk
 from tkinter import messagebox as mb
 from tkinter import simpledialog as sd
+
 
 class FixedListWidget:
     def __init__(self, frame, game, trainIdx, decryptFile, text, elseList, ver, reloadFunc):
@@ -16,25 +17,25 @@ class FixedListWidget:
         self.reloadFunc = reloadFunc
 
         self.elseLf = ttk.LabelFrame(self.frame, text=text)
-        self.elseLf.pack(side=LEFT, anchor=NW, padx=10)
+        self.elseLf.pack(side=tkinter.LEFT, anchor=tkinter.NW, padx=10)
 
         self.txtFrame = ttk.Frame(self.elseLf)
-        self.txtFrame.pack(anchor=NW)
-        
+        self.txtFrame.pack(anchor=tkinter.NW)
+
         for i in range(len(self.elseList)):
             colNum = 0
             if self.game == 0 and ver == 1:
-                self.varLb = Label(self.txtFrame, text="No.{0}".format(i+1), font=("", 20), borderwidth=1, relief="solid")
-                self.varLb.grid(row=i, column=colNum, sticky=W+E, ipadx=15)
+                self.varLb = tkinter.Label(self.txtFrame, text="No.{0}".format(i + 1), font=("", 20), borderwidth=1, relief="solid")
+                self.varLb.grid(row=i, column=colNum, sticky=tkinter.W + tkinter.E, ipadx=15)
                 colNum += 1
             elseInfo = self.elseList[i]
-            self.varTemp = StringVar()
+            self.varTemp = tkinter.StringVar()
             self.varTemp.set(elseInfo)
-            self.tempTextLb = Label(self.txtFrame, textvariable=self.varTemp, font=("", 20), borderwidth=1, relief="solid")
-            self.tempTextLb.grid(row=i, column=colNum, sticky=W+E, ipadx=15)
+            self.tempTextLb = tkinter.Label(self.txtFrame, textvariable=self.varTemp, font=("", 20), borderwidth=1, relief="solid")
+            self.tempTextLb.grid(row=i, column=colNum, sticky=tkinter.W + tkinter.E, ipadx=15)
             colNum += 1
-            self.tempBtn = Button(self.txtFrame, text="修正", font=("", 14), command=partial(self.editVar, i, elseInfo))
-            self.tempBtn.grid(row=i, column=colNum,  sticky=W+E)
+            self.tempBtn = tkinter.Button(self.txtFrame, text="修正", font=("", 14), command=partial(self.editVar, i, elseInfo))
+            self.tempBtn.grid(row=i, column=colNum, sticky=tkinter.W + tkinter.E)
 
     def editVar(self, i, elseInfo):
         resultValue = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=elseInfo)
@@ -45,5 +46,4 @@ class FixedListWidget:
                 mb.showerror(title="エラー", message="予想外のエラーが発生しました")
                 return
             mb.showinfo(title="成功", message="情報を修正しました")
-
             self.reloadFunc()

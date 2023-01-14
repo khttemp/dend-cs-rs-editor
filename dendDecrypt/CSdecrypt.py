@@ -2,6 +2,7 @@
 
 import struct
 import traceback
+import codecs
 
 CSTrainName = [
     "H2000",
@@ -11,10 +12,10 @@ CSTrainName = [
     "KQ21XX",
     "JR2000",
     "Rapit",
-    
+
     "Old_H2000",
     "Old_H8200",
-    
+
     "Arban21000R",
     "K800",
     "H7001",
@@ -63,6 +64,7 @@ hurikoName = [
     "振り子の曲げる角度(°)"
 ]
 
+
 class CSdecrypt():
     def __init__(self, filePath):
         self.filePath = filePath
@@ -99,13 +101,15 @@ class CSdecrypt():
             self.decrypt(line)
             self.byteArr = bytearray(line)
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
+
     def printError(self):
         f = open("error_log.txt", "w")
         f.write(self.error)
         f.close()
+
     def decrypt(self, line):
         self.trainInfoList = []
         self.indexList = []
@@ -122,7 +126,7 @@ class CSdecrypt():
         self.error = ""
         self.trainModelList = []
         self.stageList = []
-        
+
         index = 0
         trainCnt = line[index]
         index += 1
@@ -139,7 +143,7 @@ class CSdecrypt():
                         index += 1
                 else:
                     for k in range(notchCnt):
-                        speed = struct.unpack("<f", line[index:index+4])[0]
+                        speed = struct.unpack("<f", line[index:index + 4])[0]
                         speed = round(speed, 4)
                         train_speed.append(speed)
                         index += 4
@@ -147,12 +151,12 @@ class CSdecrypt():
 
             train_perf = []
             for j in range(len(perfName)):
-                perf = struct.unpack("<f", line[index:index+4])[0]
+                perf = struct.unpack("<f", line[index:index + 4])[0]
                 perf = round(perf, 5)
                 train_perf.append(perf)
                 index += 4
             self.trainInfoList.append(train_perf)
-            
+
             train_huriko = []
             for j in range(2):
                 train_huriko.append(line[index])
@@ -162,28 +166,28 @@ class CSdecrypt():
             self.mdlIndexList.append(index)
 
             train = {
-                "trackNames":[],
-                "mdlCnt":0,
-                "mdlNames":[],
-                "colNames":[],
-                "pantaNames":[],
-                "mdlList":[],
-                "pantaList":[],
-                "colList":[],
-                "colorCnt":0,
-                "elseModel":[],
-                "else2Model":[],
-                "elseList2":[],
-                "lensList":[],
-                "tailList":[]
+                "trackNames": [],
+                "mdlCnt": 0,
+                "mdlNames": [],
+                "colNames": [],
+                "pantaNames": [],
+                "mdlList": [],
+                "pantaList": [],
+                "colList": [],
+                "colorCnt": 0,
+                "elseModel": [],
+                "else2Model": [],
+                "elseList2": [],
+                "lensList": [],
+                "tailList": []
             }
-            
+
             smfTrackCnt = line[index]
             index += 1
             for j in range(smfTrackCnt):
                 b = line[index]
                 index += 1
-                train["trackNames"].append(line[index:index+b].decode("shift-jis"))
+                train["trackNames"].append(line[index:index + b].decode("shift-jis"))
                 index += b
 
             self.henseiIndexList.append(index)
@@ -197,7 +201,7 @@ class CSdecrypt():
             for j in range(mdlSmfCnt):
                 b = line[index]
                 index += 1
-                train["mdlNames"].append(line[index:index+b].decode("shift-jis"))
+                train["mdlNames"].append(line[index:index + b].decode("shift-jis"))
                 index += b
 
             train["mdlNames"].append("なし")
@@ -205,7 +209,7 @@ class CSdecrypt():
             for j in range(mdlSmfCnt):
                 b = line[index]
                 index += 1
-                train["colNames"].append(line[index:index+b].decode("shift-jis"))
+                train["colNames"].append(line[index:index + b].decode("shift-jis"))
                 index += b
 
             train["colNames"].append("なし")
@@ -215,28 +219,28 @@ class CSdecrypt():
             for j in range(pantaCnt):
                 b = line[index]
                 index += 1
-                train["pantaNames"].append(line[index:index+b].decode("shift-jis"))
+                train["pantaNames"].append(line[index:index + b].decode("shift-jis"))
                 index += b
 
             train["pantaNames"].append("なし")
 
             self.henseiModelEndIndexList.append(index)
-            
+
             for j in range(4):
                 b = line[index]
                 index += 1
-                train["elseModel"].append(line[index:index+b].decode("shift-jis"))
+                train["elseModel"].append(line[index:index + b].decode("shift-jis"))
                 index += b
 
             self.henseiStartIndexList.append(index)
-            #mdlList
+            # mdlList
             for j in range(mdlCnt):
                 if line[index] == 0xFF:
                     train["mdlList"].append(-1)
                 else:
                     train["mdlList"].append(line[index])
                 index += 1
-            #pantaList
+            # pantaList
             for j in range(mdlCnt):
                 if line[index] == 0xFF:
                     train["pantaList"].append(-1)
@@ -249,7 +253,7 @@ class CSdecrypt():
             for j in range(5):
                 b = line[index]
                 index += 1
-                train["else2Model"].append(line[index:index+b].decode("shift-jis"))
+                train["else2Model"].append(line[index:index + b].decode("shift-jis"))
                 index += b
 
             self.else2IndexList.append(index)
@@ -258,7 +262,7 @@ class CSdecrypt():
             index += 1
             b = line[index]
             index += 1
-            name = line[index:index+b].decode("shift-jis")
+            name = line[index:index + b].decode("shift-jis")
             index += b
             elseList2.append([cnta, name])
 
@@ -266,35 +270,35 @@ class CSdecrypt():
             index += 1
             b = line[index]
             index += 1
-            name = line[index:index+b].decode("shift-jis")
+            name = line[index:index + b].decode("shift-jis")
             index += b
             elseList2.append([cntb, name])
 
             train["elseList2"] = elseList2
 
             self.lensIndexList.append(index)
-            
+
             lensCnt = line[index]
             index += 1
-            
+
             for j in range(lensCnt):
                 lensList = []
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b].decode("shift-jis")
+                lensName = line[index:index + b].decode("shift-jis")
                 lensList.append(lensName)
                 index += b
 
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b].decode("shift-jis")
+                lensName = line[index:index + b].decode("shift-jis")
                 lensList.append(lensName)
                 index += b
 
-                f1 = struct.unpack("<f", line[index:index+4])[0]
+                f1 = struct.unpack("<f", line[index:index + 4])[0]
                 lensList.append(f1)
                 index += 4
-                f2 = struct.unpack("<f", line[index:index+4])[0]
+                f2 = struct.unpack("<f", line[index:index + 4])[0]
                 lensList.append(f2)
                 index += 4
 
@@ -306,7 +310,7 @@ class CSdecrypt():
                 train["lensList"].append(lensList)
 
             self.tailIndexList.append(index)
-            
+
             tailCnt = line[index]
             index += 1
 
@@ -315,7 +319,7 @@ class CSdecrypt():
             for j in range(tailCnt):
                 b = line[index]
                 index += 1
-                tailSmfName = line[index:index+b].decode("shift-jis")
+                tailSmfName = line[index:index + b].decode("shift-jis")
                 tailSmfList.append(tailSmfName)
                 index += b
             tailList.append(tailSmfList)
@@ -331,20 +335,20 @@ class CSdecrypt():
                 lensList = []
                 b = line[index]
                 index += 1
-                lensName = line[index:index+b].decode("shift-jis")
-                lensList.append(lensName)
-                index += b
-                
-                b = line[index]
-                index += 1
-                lensName = line[index:index+b].decode("shift-jis")
+                lensName = line[index:index + b].decode("shift-jis")
                 lensList.append(lensName)
                 index += b
 
-                f1 = struct.unpack("<f", line[index:index+4])[0]
+                b = line[index]
+                index += 1
+                lensName = line[index:index + b].decode("shift-jis")
+                lensList.append(lensName)
+                index += b
+
+                f1 = struct.unpack("<f", line[index:index + 4])[0]
                 lensList.append(f1)
                 index += 4
-                f2 = struct.unpack("<f", line[index:index+4])[0]
+                f2 = struct.unpack("<f", line[index:index + 4])[0]
                 lensList.append(f2)
                 index += 4
 
@@ -359,18 +363,20 @@ class CSdecrypt():
             train["tailList"] = [tailSmfList, tailElseList, tailLensList]
 
             self.trainModelList.append(train)
-            
+
         self.colorIdx = index
-        for i in range(len(CSTrainName)+3):
-            trainName = ""
+        for i in range(len(CSTrainName) + 3):
             if i == len(CSTrainName):
-                trainName = "S300"
-            elif i == len(CSTrainName)+1:
-                trainName = "Yokohama"
-            elif i == len(CSTrainName)+2:
-                trainName = "S500"
+                # trainName = "S300"
+                pass
+            elif i == len(CSTrainName) + 1:
+                # trainName = "Yokohama"
+                pass
+            elif i == len(CSTrainName) + 2:
+                # trainName = "S500"
+                pass
             else:
-                trainName = CSTrainName[i]
+                # trainName = CSTrainName[i]
                 self.trainModelList[i]["colorCnt"] = line[index]
             index += 1
         self.stageIdx = index
@@ -378,7 +384,7 @@ class CSdecrypt():
         stageCnt = line[index]
         index += 1
         for i in range(stageCnt):
-            stageNum = struct.unpack("<h", line[index:index+2])[0]
+            stageNum = struct.unpack("<h", line[index:index + 2])[0]
             index += 2
             train_1pIdx = line[index]
             if train_1pIdx == 0xFF:
@@ -395,11 +401,12 @@ class CSdecrypt():
             daishaIdx = line[index]
             index += 1
             self.stageList.append([stageNum, train_1pIdx, train_2pIdx, train_3pIdx, daishaIdx])
+
     def saveNotchInfo(self, trainIdx, newNotchNum):
         try:
             newByteArr = bytearray()
             index = self.indexList[trainIdx]
-            speed = self.trainInfoList[3*trainIdx]
+            speed = self.trainInfoList[3 * trainIdx]
             notchContentCnt = 4
             oldNotchNum = len(speed) // notchContentCnt
 
@@ -415,18 +422,18 @@ class CSdecrypt():
                         newSpeed.append(speed[oldNotchNum * i + j])
                     for j in range(diff):
                         newSpeed.append(0)
-            
+
             newByteArr.extend(self.byteArr[0:index])
             newByteArr.append(newNotchNum)
             index += 1
-            
+
             for i in range(len(newSpeed)):
                 if i >= 2 * newNotchNum and i < 3 * newNotchNum:
                     newByteArr.append(newSpeed[i])
                 else:
                     byteF = struct.pack("<f", newSpeed[i])
                     newByteArr.extend(byteF)
-                    
+
             for i in range(len(speed)):
                 if i >= 2 * oldNotchNum and i < 3 * oldNotchNum:
                     index += 1
@@ -438,51 +445,52 @@ class CSdecrypt():
 
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
+
     def saveTrainInfo(self, trainIdx, varList):
         try:
             newByteArr = bytearray()
-            
+
             index = self.indexList[trainIdx]
             notchCnt = self.byteArr[index]
             index += 1
-            
+
             newByteArr = self.byteArr[0:index]
-            
+
             for i in range(notchCnt):
-                speed = struct.pack("<f", varList[self.notchContentCnt*i].get())
+                speed = struct.pack("<f", varList[self.notchContentCnt * i].get())
                 newByteArr.extend(speed)
-                
+
             for i in range(notchCnt):
-                tlk = struct.pack("<f", varList[self.notchContentCnt*i+1].get())
+                tlk = struct.pack("<f", varList[self.notchContentCnt * i + 1].get())
                 newByteArr.extend(tlk)
 
             for i in range(notchCnt):
-                sound = struct.pack("<c", varList[self.notchContentCnt*i+2].get().to_bytes(1, 'big'))
+                sound = struct.pack("<c", varList[self.notchContentCnt * i + 2].get().to_bytes(1, 'big'))
                 newByteArr.extend(sound)
 
             for i in range(notchCnt):
-                add = struct.pack("<f", varList[self.notchContentCnt*i+3].get())
+                add = struct.pack("<f", varList[self.notchContentCnt * i + 3].get())
                 newByteArr.extend(add)
 
             perfCnt = len(self.trainPerfNameList)
             for i in range(perfCnt):
-                perf = struct.pack("<f", varList[notchCnt*self.notchContentCnt+i].get())
+                perf = struct.pack("<f", varList[notchCnt * self.notchContentCnt + i].get())
                 newByteArr.extend(perf)
-                    
+
             for i in range(2):
-                huriko = struct.pack("<c", varList[notchCnt*self.notchContentCnt+perfCnt+i].get().to_bytes(1, 'big'))
+                huriko = struct.pack("<c", varList[notchCnt * self.notchContentCnt + perfCnt + i].get().to_bytes(1, 'big'))
                 newByteArr.extend(huriko)
-            
+
             index = self.mdlIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
 
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -494,16 +502,16 @@ class CSdecrypt():
             newByteArr = self.byteArr[0:index]
 
             henseiIndex = self.henseiIndexList[trainIdx]
-            
+
             newByteArr[henseiIndex] = num
             oldCnt = self.byteArr[henseiIndex]
 
-            #mdlList
+            # mdlList
             if num < oldCnt:
                 for j in range(num):
                     newByteArr.append(self.byteArr[index])
                     index += 1
-                
+
                 for j in range(oldCnt - num):
                     index += 1
             else:
@@ -513,13 +521,13 @@ class CSdecrypt():
 
                 for j in range(num - oldCnt):
                     newByteArr.append(0)
-                
-            #pantaList
+
+            # pantaList
             if num < oldCnt:
                 for j in range(num):
                     newByteArr.append(self.byteArr[index])
                     index += 1
-                
+
                 for j in range(oldCnt - num):
                     index += 1
             else:
@@ -532,10 +540,10 @@ class CSdecrypt():
 
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -543,10 +551,10 @@ class CSdecrypt():
         try:
             index = self.colorIdx + trainIdx
             self.byteArr[index] = num
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -557,27 +565,27 @@ class CSdecrypt():
 
             henseiIndex = self.henseiIndexList[trainIdx]
             cnt = self.byteArr[henseiIndex]
-            
+
             for i in range(cnt):
-                idx = trainWidget.comboList[2*i].current()
-                if idx == len(trainWidget.comboList[2*i]["values"])-1:
+                idx = trainWidget.comboList[2 * i].current()
+                if idx == len(trainWidget.comboList[2 * i]["values"]) - 1:
                     idx = 255
                 newByteArr.append(idx)
                 index += 1
 
             for i in range(cnt):
-                idx = trainWidget.comboList[2*i+1].current()
-                if idx == len(trainWidget.comboList[2*i+1]["values"])-1:
+                idx = trainWidget.comboList[2 * i + 1].current()
+                if idx == len(trainWidget.comboList[2 * i + 1]["values"]) - 1:
                     idx = 255
                 newByteArr.append(idx)
                 index += 1
 
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -587,7 +595,7 @@ class CSdecrypt():
             newByteArr = self.byteArr[0:index]
 
             newTrackList = modelInfo["trackNames"]
-            
+
             newByteArr.append(len(newTrackList))
             for newTrack in newTrackList:
                 newByteArr.append(len(newTrack))
@@ -597,33 +605,33 @@ class CSdecrypt():
             newByteArr.append(newCnt)
 
             newMdlList = modelInfo["mdlNames"]
-            newByteArr.append(len(newMdlList)-1)
+            newByteArr.append(len(newMdlList) - 1)
             for newMdl in newMdlList:
                 if newMdl == "なし":
                     continue
                 newByteArr.append(len(newMdl))
                 newByteArr.extend(newMdl.encode("shift-jis"))
 
-            for i in range(len(newMdlList)-1):
+            for i in range(len(newMdlList) - 1):
                 strHex = "H2000_COL_0.smf"
                 newByteArr.append(len(strHex))
                 newByteArr.extend(strHex.encode("shift-jis"))
 
             newPantaList = modelInfo["pantaNames"]
-            newByteArr.append(len(newPantaList)-1)
+            newByteArr.append(len(newPantaList) - 1)
             for newPanta in newPantaList:
                 if newPanta == "なし":
                     continue
                 newByteArr.append(len(newPanta))
                 newByteArr.extend(newPanta.encode("shift-jis"))
-                
+
             index = self.henseiModelEndIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -632,7 +640,7 @@ class CSdecrypt():
             if ver == 1:
                 index = self.henseiModelEndIndexList[trainIdx]
                 newByteArr = self.byteArr[0:index]
-                
+
                 for i in range(4):
                     strHex = elseList[i].encode("shift-jis")
                     newByteArr.append(len(strHex))
@@ -653,10 +661,10 @@ class CSdecrypt():
 
                 newByteArr.extend(self.byteArr[index:])
                 self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -678,10 +686,10 @@ class CSdecrypt():
             index = self.lensIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -702,7 +710,7 @@ class CSdecrypt():
                     strHex = "lensflear01.tga".encode("shift-jis")
                     newByteArr.append(len(strHex))
                     newByteArr.extend(strHex)
-                    
+
                     tempF0 = struct.pack("<f", 0)
                     for j in range(2):
                         newByteArr.extend(tempF0)
@@ -716,7 +724,7 @@ class CSdecrypt():
                     b = self.byteArr[index]
                     index += 1
                     index += b
-                    
+
                     for j in range(2):
                         index += 4
                     for j in range(4):
@@ -729,10 +737,10 @@ class CSdecrypt():
             newByteArr[index] = cnt
 
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -760,10 +768,10 @@ class CSdecrypt():
             index = self.tailIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -827,7 +835,7 @@ class CSdecrypt():
                     for s in strHex:
                         newByteArr.insert(index, s)
                         index += 1
-                    
+
                     tempF0 = struct.pack("<f", 0)
                     for j in range(2):
                         for s in tempF0:
@@ -878,17 +886,18 @@ class CSdecrypt():
             newByteArr[index] = cnt
 
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
     def saveTailSmfElse(self, trainIdx, valList):
         try:
             index = self.tailIndexList[trainIdx]
-            tailCnt = self.byteArr[index]
+            # tailCnt
+            self.byteArr[index]
             index += 1
 
             newByteArr = self.byteArr[0:index]
@@ -906,15 +915,15 @@ class CSdecrypt():
             for i in range(cnt):
                 valInfo = valList[cnt + i]
                 newByteArr.append(valInfo)
-                
+
                 index += 1
 
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-            
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -931,7 +940,7 @@ class CSdecrypt():
 
             for i in range(tailCnt):
                 index += 1
-            
+
             newByteArr = self.byteArr[0:index]
 
             for i in range(len(valList)):
@@ -952,19 +961,19 @@ class CSdecrypt():
             index = self.tailEndIndexList[trainIdx]
             newByteArr.extend(self.byteArr[index:])
             self.byteArr = newByteArr
-                
+
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
-        
+
     def saveStageInfo(self, stageList):
         try:
             index = self.stageIdx
             stageAllCnt = self.byteArr[index]
             index += 1
-            
+
             for i in range(stageAllCnt):
                 index += 2
 
@@ -991,7 +1000,7 @@ class CSdecrypt():
 
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -1001,22 +1010,22 @@ class CSdecrypt():
                 idx = index
                 notchCnt = self.byteArr[index]
                 idx += 1
-                #speed
+                # speed
                 for i in range(notchCnt):
                     idx += 4
-                #tlk
+                # tlk
                 for i in range(notchCnt):
                     idx += 4
-                #sound
+                # sound
                 for i in range(notchCnt):
                     idx += 1
-                #add
+                # add
                 for i in range(notchCnt):
                     idx += 4
 
-                idx = idx + 4*perfIndex
+                idx = idx + 4 * perfIndex
 
-                originPerf = struct.unpack("<f", self.byteArr[idx:idx+4])[0]
+                originPerf = struct.unpack("<f", self.byteArr[idx:idx + 4])[0]
                 if calcIndex == 0:
                     originPerf *= num
                 else:
@@ -1028,7 +1037,7 @@ class CSdecrypt():
                     idx += 1
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -1041,7 +1050,7 @@ class CSdecrypt():
         distNotchNum = len(distData["notch"])
         notchCheckStatus = checkStatusList[0]
         perfCheckStatus = checkStatusList[1]
-        
+
         try:
             loopCnt = 0
             if srcNotchNum > distNotchNum:
@@ -1057,7 +1066,6 @@ class CSdecrypt():
             for i in range(len(srcHuriko)):
                 srcHuriko[i] = distData["huriko"][i]
 
-            
             for i in range(4):
                 if i == 0:
                     data = distData["notch"]
@@ -1067,13 +1075,13 @@ class CSdecrypt():
                     data = distData["soundNum"]
                 elif i == 3:
                     data = distData["add"]
-                    
+
                 for j in range(loopCnt):
-                    srcSpeed[i*srcNotchNum+j] = data[j]
-                    
+                    srcSpeed[i * srcNotchNum + j] = data[j]
+
             for i in range(srcNotchNum):
                 if notchCheckStatus:
-                    speed = struct.pack("<f", srcSpeed[0*srcNotchNum+i])
+                    speed = struct.pack("<f", srcSpeed[0 * srcNotchNum + i])
                     for n in speed:
                         self.byteArr[index] = n
                         index += 1
@@ -1081,25 +1089,25 @@ class CSdecrypt():
                     index += 4
             for i in range(srcNotchNum):
                 if notchCheckStatus:
-                    tlk = struct.pack("<f", srcSpeed[1*srcNotchNum+i])
+                    tlk = struct.pack("<f", srcSpeed[1 * srcNotchNum + i])
                     for n in tlk:
                         self.byteArr[index] = n
                         index += 1
                 else:
                     index += 4
-            
+
             for i in range(srcNotchNum):
                 if notchCheckStatus:
-                    sound = struct.pack("<c", srcSpeed[2*srcNotchNum+i].to_bytes(1, 'big'))
+                    sound = struct.pack("<c", srcSpeed[2 * srcNotchNum + i].to_bytes(1, 'big'))
                     for n in sound:
                         self.byteArr[index] = n
                         index += 1
                 else:
                     index += 1
-                    
+
             for i in range(srcNotchNum):
                 if notchCheckStatus:
-                    add = struct.pack("<f", srcSpeed[3*srcNotchNum+i])
+                    add = struct.pack("<f", srcSpeed[3 * srcNotchNum + i])
                     for n in add:
                         self.byteArr[index] = n
                         index += 1
@@ -1114,7 +1122,7 @@ class CSdecrypt():
                         index += 1
                 else:
                     index += 4
-                    
+
             for i in range(2):
                 if perfCheckStatus:
                     huriko = struct.pack("<c", srcHuriko[i].to_bytes(1, 'big'))
@@ -1125,35 +1133,35 @@ class CSdecrypt():
                     index += 1
             self.saveTrain()
             return True
-        except Exception as e:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
     def extractCsvTrainInfo(self, trainIdx, filePath):
         try:
-            w = open(filePath, "w")
-            speedList = self.trainInfoList[3*trainIdx]
+            w = codecs.open(filePath, "w", "utf-8-sig", "ignore")
+            speedList = self.trainInfoList[3 * trainIdx]
             index = self.indexList[trainIdx]
             notchCnt = self.byteArr[index]
 
             w.write("ノッチ:{0}\n".format(notchCnt))
             w.write("speed,tlk,sound,add\n")
-            
+
             for i in range(notchCnt):
                 for j in range(self.notchContentCnt):
-                    w.write("{0}".format(speedList[i + notchCnt*j]))
+                    w.write("{0}".format(speedList[i + notchCnt * j]))
                     if j == self.notchContentCnt - 1:
                         w.write("\n")
                     else:
                         w.write(",")
             w.write("性能\n")
-            
-            perfList = self.trainInfoList[3*trainIdx+1]
+
+            perfList = self.trainInfoList[3 * trainIdx + 1]
             perfNameList = self.trainPerfNameList
             for i in range(len(perfList)):
                 w.write("{0},{1}\n".format(perfNameList[i], perfList[i]))
-            
-            hurikoList = self.trainInfoList[3*trainIdx+2]
+
+            hurikoList = self.trainInfoList[3 * trainIdx + 2]
             hurikoNameList = self.trainHurikoNameList
 
             for i in range(len(hurikoList)):
@@ -1202,10 +1210,10 @@ class CSdecrypt():
                 w.write("{0},{1}\n".format(lensInfo[2], lensInfo[3]))
                 w.write(",".join([str(x) for x in lensInfo[4]]))
                 w.write("\n")
-            
+
             w.close()
             return True
-        except:
+        except Exception:
             self.error = traceback.format_exc()
             return False
 
@@ -1218,7 +1226,7 @@ class CSdecrypt():
                 return False
 
             arr = csvLines[cnt].strip().split(":")[1]
-            
+
             notchCnt = int(arr.split(",")[0])
             if notchCnt not in [4, 5, 12]:
                 self.error = "{0}ノッチは非対応です".format(notchCnt)
@@ -1232,7 +1240,7 @@ class CSdecrypt():
                 self.error = "ノッチのヘッダーがありません"
                 return False
             cnt += 1
-            
+
             speed = []
             tlk = []
             sound = []
@@ -1245,8 +1253,8 @@ class CSdecrypt():
                     sound.append(int(arr[2]))
                     add.append(float(arr[3]))
                     cnt += 1
-            except:
-                self.error = "{0}ノッチ読み込み中\n{1}ノッチ情報読み込み失敗".format(notchCnt, i+1)
+            except Exception:
+                self.error = "{0}ノッチ読み込み中\n{1}ノッチ情報読み込み失敗".format(notchCnt, i + 1)
                 return False
             speed.extend(tlk)
             speed.extend(sound)
@@ -1264,7 +1272,7 @@ class CSdecrypt():
                 perf.append(float(arr[1]))
                 cnt += 1
             self.csvReadInfo["perf"] = perf
-                
+
             huriko = []
             for i in range(len(self.trainHurikoNameList)):
                 arr = csvLines[cnt].strip().split(",")
@@ -1329,7 +1337,7 @@ class CSdecrypt():
                     if idx < -1 or idx >= mdlCnt:
                         self.error = "車両index情報が不正です"
                         return False
-                except:
+                except Exception:
                     self.error = "車両index情報 読み込み失敗"
                     return False
                 mdlList.append(idx)
@@ -1363,7 +1371,7 @@ class CSdecrypt():
                     if idx < -1 or idx >= pantaCnt:
                         self.error = "パンタindex情報が不正です"
                         return False
-                except:
+                except Exception:
                     self.error = "パンタindex情報 読み込み失敗"
                     return False
                 pantaList.append(idx)
@@ -1403,7 +1411,7 @@ class CSdecrypt():
 
                 lensList.append(lensInfo)
             self.csvReadInfo["lensList"] = lensList
-            
+
             if csvLines[cnt].strip().split(":")[0] != "テールランプ":
                 self.error = "テールランプ情報を探せません"
                 return False
@@ -1411,7 +1419,7 @@ class CSdecrypt():
             arr = csvLines[cnt].strip().split(":")[1]
             tailCnt = int(arr.split(",")[0])
             cnt += 1
-            
+
             tailList = []
             tailSmfNameList = []
             arr = csvLines[cnt].strip().split(",")
@@ -1453,12 +1461,12 @@ class CSdecrypt():
                 tailLensList.append(lensInfo)
             tailList.append(tailLensList)
             self.csvReadInfo["tailList"] = tailList
-            
+
             return True
-        except:
+        except Exception:
             self.error = "{0}行目の読み込み失敗".format(cnt + 1)
             return False
-        
+
     def saveCsvTrainInfo(self, trainIdx):
         try:
             index = self.indexList[trainIdx]
@@ -1471,9 +1479,9 @@ class CSdecrypt():
             for i in range(4):
                 for j in range(notchCnt):
                     if i == 2:
-                        newByteArr.append(speed[i*notchCnt + j])
+                        newByteArr.append(speed[i * notchCnt + j])
                     else:
-                        f = struct.pack("<f", speed[i*notchCnt + j])
+                        f = struct.pack("<f", speed[i * notchCnt + j])
                         newByteArr.extend(f)
 
             perf = self.csvReadInfo["perf"]
@@ -1513,7 +1521,7 @@ class CSdecrypt():
                 strHex = pantaNameList[i].encode("shift-jis")
                 newByteArr.append(len(strHex))
                 newByteArr.extend(strHex)
-                
+
             train = self.trainModelList[trainIdx]
             elseModel = train["elseModel"]
 
@@ -1590,10 +1598,10 @@ class CSdecrypt():
             self.byteArr = newByteArr
             self.saveTrain()
             return True
-        except:
+        except Exception:
             self.error = traceback.format_exc()
             return False
-        
+
     def saveTrain(self):
         w = open(self.filePath, "wb")
         w.write(self.byteArr)

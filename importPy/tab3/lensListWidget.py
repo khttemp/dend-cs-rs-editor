@@ -1,11 +1,12 @@
 from functools import partial
 
-from tkinter import *
+import tkinter
 from tkinter import ttk
 from tkinter import messagebox as mb
 from tkinter import simpledialog as sd
 
-from importPy.tkinterScrollbarFrameClass import *
+from importPy.tkinterScrollbarFrameClass import ScrollbarFrame
+
 
 class LensListWidget:
     def __init__(self, frame, decryptFile, trainIdx, lensList, reloadFunc):
@@ -16,59 +17,59 @@ class LensListWidget:
         self.reloadFunc = reloadFunc
 
         self.lensListLf = ttk.LabelFrame(self.frame, text="レンズフレア情報")
-        self.lensListLf.pack(anchor=NW, padx=10, expand=True, fill=BOTH)
+        self.lensListLf.pack(anchor=tkinter.NW, padx=10, expand=True, fill=tkinter.BOTH)
 
         scrollbarFrame = ScrollbarFrame(self.lensListLf)
 
         self.txtFrame = ttk.Frame(scrollbarFrame.frame)
-        self.txtFrame.pack(anchor=NW)
+        self.txtFrame.pack(anchor=tkinter.NW)
 
-        self.lensCntNameLb = Label(self.txtFrame, text="lens情報数", font=("", 20), width=12, borderwidth=1, relief="solid")
-        self.lensCntNameLb.grid(row=0, column=0, sticky=W+E)
-        self.varLensCnt = IntVar()
+        self.lensCntNameLb = tkinter.Label(self.txtFrame, text="lens情報数", font=("", 20), width=12, borderwidth=1, relief="solid")
+        self.lensCntNameLb.grid(row=0, column=0, sticky=tkinter.W + tkinter.E)
+        self.varLensCnt = tkinter.IntVar()
         self.varLensCnt.set(len(self.lensList))
-        self.lensCntTextLb = Label(self.txtFrame, textvariable=self.varLensCnt, font=("", 20), width=7, borderwidth=1, relief="solid")
-        self.lensCntTextLb.grid(row=0, column=1, sticky=W+E)
-        self.lensCntBtn = Button(self.txtFrame, text="修正", font=("", 14), command=lambda :self.editLensCnt(self.varLensCnt.get()))
-        self.lensCntBtn.grid(row=0, column=2, sticky=W+E)
+        self.lensCntTextLb = tkinter.Label(self.txtFrame, textvariable=self.varLensCnt, font=("", 20), width=7, borderwidth=1, relief="solid")
+        self.lensCntTextLb.grid(row=0, column=1, sticky=tkinter.W + tkinter.E)
+        self.lensCntBtn = tkinter.Button(self.txtFrame, text="修正", font=("", 14), command=lambda: self.editLensCnt(self.varLensCnt.get()))
+        self.lensCntBtn.grid(row=0, column=2, sticky=tkinter.W + tkinter.E)
 
         for i in range(len(self.lensList)):
             self.txtFrame2 = ttk.Frame(scrollbarFrame.frame)
-            self.txtFrame2.pack(anchor=NW, pady=5)
+            self.txtFrame2.pack(anchor=tkinter.NW, pady=5)
 
             self.nameFrame = ttk.Frame(self.txtFrame2)
-            self.nameFrame.pack(anchor=NW)
+            self.nameFrame.pack(anchor=tkinter.NW)
             self.eleFrame = ttk.Frame(self.txtFrame2)
-            self.eleFrame.pack(anchor=NW, padx=53)
+            self.eleFrame.pack(anchor=tkinter.NW, padx=53)
 
             lensInfo = self.lensList[i]
 
             for j in range(len(lensInfo)):
-                self.tempBtn = Button(self.nameFrame, text="修正", font=("", 14), command=partial(self.editLensList, i, lensInfo))
-                self.tempBtn.grid(row=i, column=0, sticky=W+E)
-                self.nameLb = Label(self.nameFrame, text="name", font=("", 20), width=7, borderwidth=1, relief="solid")
-                self.nameLb.grid(row=i, column=1, sticky=W+E)
-                self.f1Lb = Label(self.eleFrame, text="f1", font=("", 20), width=7, borderwidth=1, relief="solid")
-                self.f1Lb.grid(row=i, column=1, sticky=W+E)
-                self.b1Lb = Label(self.eleFrame, text="b1", font=("", 20), width=7, borderwidth=1, relief="solid")
-                self.b1Lb.grid(row=i+1, column=1, sticky=W+E)
-                
+                self.tempBtn = tkinter.Button(self.nameFrame, text="修正", font=("", 14), command=partial(self.editLensList, i, lensInfo))
+                self.tempBtn.grid(row=i, column=0, sticky=tkinter.W + tkinter.E)
+                self.nameLb = tkinter.Label(self.nameFrame, text="name", font=("", 20), width=7, borderwidth=1, relief="solid")
+                self.nameLb.grid(row=i, column=1, sticky=tkinter.W + tkinter.E)
+                self.f1Lb = tkinter.Label(self.eleFrame, text="f1", font=("", 20), width=7, borderwidth=1, relief="solid")
+                self.f1Lb.grid(row=i, column=1, sticky=tkinter.W + tkinter.E)
+                self.b1Lb = tkinter.Label(self.eleFrame, text="b1", font=("", 20), width=7, borderwidth=1, relief="solid")
+                self.b1Lb.grid(row=i + 1, column=1, sticky=tkinter.W + tkinter.E)
+
                 if j in [0, 1]:
-                    self.varTemp = StringVar()
+                    self.varTemp = tkinter.StringVar()
                     self.varTemp.set(lensInfo[j])
-                    self.temphTextLb = Label(self.nameFrame, textvariable=self.varTemp, font=("", 20), borderwidth=1, relief="solid")
-                    self.temphTextLb.grid(row=i, column=j+2, sticky=W+E, ipadx=10)
+                    self.temphTextLb = tkinter.Label(self.nameFrame, textvariable=self.varTemp, font=("", 20), borderwidth=1, relief="solid")
+                    self.temphTextLb.grid(row=i, column=j + 2, sticky=tkinter.W + tkinter.E, ipadx=10)
                 elif j in [2, 3]:
-                    self.varTempF = DoubleVar()
+                    self.varTempF = tkinter.DoubleVar()
                     self.varTempF.set(round(float(lensInfo[j]), 3))
-                    self.temphTextLb = Label(self.eleFrame, textvariable=self.varTempF, width = 7, font=("", 20), borderwidth=1, relief="solid")
-                    self.temphTextLb.grid(row=i, column=j, sticky=W+E)
+                    self.temphTextLb = tkinter.Label(self.eleFrame, textvariable=self.varTempF, width=7, font=("", 20), borderwidth=1, relief="solid")
+                    self.temphTextLb.grid(row=i, column=j, sticky=tkinter.W + tkinter.E)
                 elif j == 4:
                     for k in range(len(lensInfo[j])):
-                        self.varTemp = IntVar()
+                        self.varTemp = tkinter.IntVar()
                         self.varTemp.set(int(lensInfo[j][k]))
-                        self.temphTextLb = Label(self.eleFrame, textvariable=self.varTemp, width = 7, font=("", 20), borderwidth=1, relief="solid")
-                        self.temphTextLb.grid(row=i+1, column=k+2, sticky=W+E)
+                        self.temphTextLb = tkinter.Label(self.eleFrame, textvariable=self.varTemp, width=7, font=("", 20), borderwidth=1, relief="solid")
+                        self.temphTextLb.grid(row=i + 1, column=k + 2, sticky=tkinter.W + tkinter.E)
 
     def editLensCnt(self, val):
         result = EditLensCntWidget(self.frame, "lens情報数の変更", self.decryptFile, val)
@@ -79,7 +80,7 @@ class LensListWidget:
                 return
             mb.showinfo(title="成功", message="lens情報数を修正しました")
             self.reloadFunc()
-            
+
     def editLensList(self, i, valList):
         result = EditLensWidget(self.frame, "lens情報の変更", self.decryptFile, valList)
         if result.reloadFlag:
@@ -90,6 +91,7 @@ class LensListWidget:
                 return
             mb.showinfo(title="成功", message="lens情報を修正しました")
             self.reloadFunc()
+
 
 class EditLensCntWidget(sd.Dialog):
     def __init__(self, master, title, decryptFile, val):
@@ -105,7 +107,7 @@ class EditLensCntWidget(sd.Dialog):
         self.valLb = ttk.Label(master, text="値を入力してください", font=("", 14))
         self.valLb.pack()
 
-        self.varLensCnt = IntVar()
+        self.varLensCnt = tkinter.IntVar()
         self.varLensCnt.set(self.val)
         self.valEt = ttk.Entry(master, textvariable=self.varLensCnt, font=("", 14), width=16)
         self.valEt.pack()
@@ -122,7 +124,7 @@ class EditLensCntWidget(sd.Dialog):
                         mb.showerror(title="数字エラー", message=errorMsg)
                         return False
                     self.resultValue = res
-                except:
+                except Exception:
                     errorMsg = "整数で入力してください。"
                     mb.showerror(title="数字エラー", message=errorMsg)
             except Exception:
@@ -139,6 +141,7 @@ class EditLensCntWidget(sd.Dialog):
 
     def apply(self):
         self.reloadFlag = True
+
 
 class EditLensWidget(sd.Dialog):
     def __init__(self, master, title, decryptFile, lensInfo):
@@ -165,30 +168,30 @@ class EditLensWidget(sd.Dialog):
         for i in range(len(self.lensInfo)):
             if i in [0, 1]:
                 self.lensLb = ttk.Label(master, text=lensInfoLbList[i], font=("", 14))
-                self.lensLb.grid(row=i, column=0, sticky=W+E)
-                self.varTemp = StringVar()
+                self.lensLb.grid(row=i, column=0, sticky=tkinter.W + tkinter.E)
+                self.varTemp = tkinter.StringVar()
                 self.varTemp.set(self.lensInfo[i])
                 self.varList.append(self.varTemp)
                 self.lensEt = ttk.Entry(master, textvariable=self.varTemp, font=("", 14))
-                self.lensEt.grid(row=i, column=1, sticky=W+E)
+                self.lensEt.grid(row=i, column=1, sticky=tkinter.W + tkinter.E)
             elif i in [2, 3]:
                 self.lensLb = ttk.Label(master, text=lensInfoLbList[i], font=("", 14))
-                self.lensLb.grid(row=i, column=0, sticky=W+E)
-                self.varTemp = DoubleVar()
+                self.lensLb.grid(row=i, column=0, sticky=tkinter.W + tkinter.E)
+                self.varTemp = tkinter.DoubleVar()
                 self.varTemp.set(round(float(self.lensInfo[i]), 3))
                 self.varList.append(self.varTemp)
                 self.lensEt = ttk.Entry(master, textvariable=self.varTemp, font=("", 14))
-                self.lensEt.grid(row=i, column=1, sticky=W+E)
+                self.lensEt.grid(row=i, column=1, sticky=tkinter.W + tkinter.E)
             elif i == 4:
                 varList = []
                 for j in range(len(self.lensInfo[i])):
-                    self.lensLb = ttk.Label(master, text=lensInfoLbList[i+j], font=("", 14))
-                    self.lensLb.grid(row=i+j, column=0, sticky=W+E)
-                    self.varTemp = IntVar()
+                    self.lensLb = ttk.Label(master, text=lensInfoLbList[i + j], font=("", 14))
+                    self.lensLb.grid(row=i + j, column=0, sticky=tkinter.W + tkinter.E)
+                    self.varTemp = tkinter.IntVar()
                     self.varTemp.set(self.lensInfo[i][j])
                     varList.append(self.varTemp)
                     self.lensEt = ttk.Entry(master, textvariable=self.varTemp, font=("", 14))
-                    self.lensEt.grid(row=i+j, column=1, sticky=W+E)
+                    self.lensEt.grid(row=i + j, column=1, sticky=tkinter.W + tkinter.E)
                 self.varList.append(varList)
 
     def validate(self):
@@ -210,10 +213,10 @@ class EditLensWidget(sd.Dialog):
                                 res.append(var)
                         self.resultValueList.append(res)
                     return True
-                except:
+                except Exception:
                     errorMsg = "数字で入力してください。"
                     mb.showerror(title="数字エラー", message=errorMsg)
-            except Exception as e:
+            except Exception:
                 errorMsg = "予想外のエラーです"
                 mb.showerror(title="エラー", message=errorMsg)
 

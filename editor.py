@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import struct
 import os
-import sys
 import codecs
-from tkinter import *
+import tkinter
 from tkinter import ttk
 from tkinter import filedialog as fd
 from tkinter import messagebox as mb
 
-from importPy.tkinterTab import *
-from importPy.tkinterStageWidget import *
+from importPy.tkinterTab import tab1AllWidget, tab2AllWidget, tab3AllWidget
+from importPy.tkinterStageWidget import EditStageInfo
 
 from dendDecrypt import LSdecrypt as dendLs
 from dendDecrypt import BSdecrypt as dendBs
@@ -28,10 +26,10 @@ RS = 3
 
 defaultData = []
 
+
 def resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("dendData"), relative_path)
+    return os.path.join(os.path.dirname(__file__), "dendData", relative_path)
+
 
 def defaultDataRead(game):
     global defaultData
@@ -69,7 +67,6 @@ def defaultDataRead(game):
             adds = [round(float(f), 4) for f in lines[count].split("\t")]
             count += 3
 
-        attNames = lines[count].split("\t")
         count += 1
         atts = [round(float(f), 5) for f in lines[count].split("\t")]
         count += 3
@@ -81,22 +78,23 @@ def defaultDataRead(game):
         if game >= CS:
             defaultData.append(
                 {
-                    "name":name,
-                    "notch":notchs,
-                    "tlk":tlks,
-                    "soundNum":soundNums,
-                    "add":adds,
-                    "att":atts,
-                    "huriko":hurikos,
+                    "name": name,
+                    "notch": notchs,
+                    "tlk": tlks,
+                    "soundNum": soundNums,
+                    "add": adds,
+                    "att": atts,
+                    "huriko": hurikos,
                 })
         else:
             defaultData.append(
                 {
-                    "name":name,
-                    "notch":notchs,
-                    "tlk":tlks,
-                    "att":atts,
+                    "name": name,
+                    "notch": notchs,
+                    "tlk": tlks,
+                    "att": atts,
                 })
+
 
 def openFile():
     global decryptFile
@@ -128,18 +126,19 @@ def openFile():
             defaultDataRead(RS)
 
     errorMsg = "予想外のエラーが出ました。\n電車でDのファイルではない、またはファイルが壊れた可能性があります。"
-    if file_path:        
+    if file_path:
         if not decryptFile.open():
             decryptFile.printError()
             mb.showerror(title="エラー", message=errorMsg)
             return
-        
+
         deleteWidget()
         initSelect()
 
+
 def initSelect():
     global decryptFile
-    
+
     cb["values"] = decryptFile.trainNameList
     cb.current(0)
     cb["state"] = "readonly"
@@ -151,14 +150,16 @@ def initSelect():
 
     edit_stage_train_button["state"] = "normal"
 
+
 def selectTrain(idx):
     global decryptFile
-    
+
     try:
         selectInfo(idx, menuCb.current())
-    except:
+    except Exception:
         errorMsg = "選択エラー！データが最新のものではない可能性があります。"
         mb.showerror(title="選択エラー", message=errorMsg)
+
 
 def selectInfo(trainIdx, index):
     global decryptFile
@@ -171,7 +172,7 @@ def selectInfo(trainIdx, index):
         edit_stage_train_button
     ]
     game = v_radio.get()
-    
+
     if index == 0:
         tab1AllWidget(tabFrame, decryptFile, trainIdx, varList, btnList, defaultData, widgetList, reloadFile)
     elif index == 1:
@@ -179,16 +180,18 @@ def selectInfo(trainIdx, index):
     elif index == 2:
         tab3AllWidget(tabFrame, decryptFile, trainIdx, game, widgetList, reloadFile)
 
+
 def deleteWidget():
     global varList
     global btnList
-    
+
     children = tabFrame.winfo_children()
     for child in children:
         child.destroy()
-        
+
     varList = []
     btnList = []
+
 
 def reloadFile():
     global decryptFile
@@ -198,21 +201,23 @@ def reloadFile():
         decryptFile.printError()
         mb.showerror(title="エラー", message=errorMsg)
         return
-    
+
     deleteWidget()
     selectTrain(cb.current())
 
+
 def selectGame():
     deleteWidget()
-    cb['state'] = 'disabled'
-    cb['values'] = []
+    cb["state"] = "disabled"
+    cb["values"] = []
     cb.set("")
 
-    menuCb['state'] = 'disabled'
-    menuCb['values'] = []
+    menuCb["state"] = "disabled"
+    menuCb["values"] = []
     menuCb.set("")
-    
-    edit_stage_train_button['state'] = 'disabled'
+
+    edit_stage_train_button["state"] = "disabled"
+
 
 def editStageTrain():
     global decryptFile
@@ -226,38 +231,39 @@ def editStageTrain():
     game = v_radio.get()
     EditStageInfo(root, "ステージ情報修正", game, decryptFile)
 
-root = Tk()
-root.title("電車でD LBCR 性能改造 1.8.1")
+
+root = tkinter.Tk()
+root.title("電車でD LBCR 性能改造 1.8.2")
 root.geometry("1024x768")
 
-menubar = Menu(root)
-menubar.add_cascade(label='ファイルを開く', command= lambda: openFile())
+menubar = tkinter.Menu(root)
+menubar.add_cascade(label="ファイルを開く", command=lambda: openFile())
 root.config(menu=menubar)
 
-cb = ttk.Combobox(root, width=10, state='disabled')
-cb.bind('<<ComboboxSelected>>', lambda e: selectTrain(cb.current()))
+cb = ttk.Combobox(root, width=10, state="disabled")
+cb.bind("<<ComboboxSelected>>", lambda e: selectTrain(cb.current()))
 cb.place(relx=0.05, rely=0.02, relwidth=0.4, height=25)
 
-menuCb = ttk.Combobox(root, width=10, state='disabled')
-menuCb.bind('<<ComboboxSelected>>', lambda e: selectInfo(cb.current(), menuCb.current()))
+menuCb = ttk.Combobox(root, width=10, state="disabled")
+menuCb.bind("<<ComboboxSelected>>", lambda e: selectInfo(cb.current(), menuCb.current()))
 menuCb.place(relx=0.05, rely=0.07, relwidth=0.2, height=25)
 
-v_radio = IntVar()
-v_edit = StringVar()
+v_radio = tkinter.IntVar()
+v_edit = tkinter.StringVar()
 
-edit_stage_train_button = ttk.Button(root, text="ステージのデフォルト車両変更", command=editStageTrain, state='disabled')
-edit_stage_train_button.place(relx = 0.48, rely=0.07, relwidth=0.2, height=25)
+edit_stage_train_button = ttk.Button(root, text="ステージのデフォルト車両変更", command=editStageTrain, state="disabled")
+edit_stage_train_button.place(relx=0.48, rely=0.07, relwidth=0.2, height=25)
 
-lsRb = Radiobutton(root, text="Lightning Stage", command = selectGame, variable=v_radio, value=LS)
+lsRb = tkinter.Radiobutton(root, text="Lightning Stage", command=selectGame, variable=v_radio, value=LS)
 lsRb.place(relx=0.48, rely=0.02)
 
-bsRb = Radiobutton(root, text="Burning Stage", command = selectGame, variable=v_radio, value=BS)
+bsRb = tkinter.Radiobutton(root, text="Burning Stage", command=selectGame, variable=v_radio, value=BS)
 bsRb.place(relx=0.61, rely=0.02)
 
-csRb = Radiobutton(root, text="Climax Stage", command = selectGame, variable=v_radio, value=CS)
+csRb = tkinter.Radiobutton(root, text="Climax Stage", command=selectGame, variable=v_radio, value=CS)
 csRb.place(relx=0.73, rely=0.02)
 
-rsRb = Radiobutton(root, text="Rising Stage", command = selectGame, variable=v_radio, value=RS)
+rsRb = tkinter.Radiobutton(root, text="Rising Stage", command=selectGame, variable=v_radio, value=RS)
 rsRb.select()
 rsRb.place(relx=0.85, rely=0.02)
 
