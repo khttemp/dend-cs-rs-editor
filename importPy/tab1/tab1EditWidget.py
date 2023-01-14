@@ -106,9 +106,16 @@ def saveCsvTrainInfo(trainIdx, decryptFile, reloadFunc):
     file_path = fd.askopenfilename(defaultextension='csv', filetypes=[("traindata_csv", "*.csv")])
     if not file_path:
         return
-    f = codecs.open(file_path, "r", "utf-8-sig", "ignore")
-    csvLines = f.readlines()
-    f.close()
+    csvLines = None
+    try:
+        f = codecs.open(file_path, "r", "utf-8-sig", "strict")
+        csvLines = f.readlines()
+        f.close()
+    except UnicodeDecodeError:
+        f = codecs.open(file_path, "r", "shift-jis", "strict")
+        csvLines = f.readlines()
+        f.close()
+
     if not decryptFile.checkCsvResult(csvLines):
         mb.showerror(title="エラー", message=decryptFile.error)
         return
