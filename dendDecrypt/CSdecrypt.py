@@ -139,7 +139,8 @@ class CSdecrypt():
             for j in range(4):
                 if j == 2:
                     for k in range(notchCnt):
-                        train_speed.append(line[index])
+                        signedB = struct.unpack("<b", line[index].to_bytes(1, 'big'))[0]
+                        train_speed.append(signedB)
                         index += 1
                 else:
                     for k in range(notchCnt):
@@ -159,7 +160,8 @@ class CSdecrypt():
 
             train_huriko = []
             for j in range(2):
-                train_huriko.append(line[index])
+                signedB = struct.unpack("<b", line[index].to_bytes(1, 'big'))[0]
+                train_huriko.append(signedB)
                 index += 1
             self.trainInfoList.append(train_huriko)
 
@@ -429,7 +431,8 @@ class CSdecrypt():
 
             for i in range(len(newSpeed)):
                 if i >= 2 * newNotchNum and i < 3 * newNotchNum:
-                    newByteArr.append(newSpeed[i])
+                    byteB = struct.pack("<b", newSpeed[i])
+                    newByteArr.extend(byteB)
                 else:
                     byteF = struct.pack("<f", newSpeed[i])
                     newByteArr.extend(byteF)
@@ -468,7 +471,7 @@ class CSdecrypt():
                 newByteArr.extend(tlk)
 
             for i in range(notchCnt):
-                sound = struct.pack("<c", varList[self.notchContentCnt * i + 2].get().to_bytes(1, 'big'))
+                sound = struct.pack("<b", varList[self.notchContentCnt * i + 2].get())
                 newByteArr.extend(sound)
 
             for i in range(notchCnt):
@@ -481,7 +484,7 @@ class CSdecrypt():
                 newByteArr.extend(perf)
 
             for i in range(2):
-                huriko = struct.pack("<c", varList[notchCnt * self.notchContentCnt + perfCnt + i].get().to_bytes(1, 'big'))
+                huriko = struct.pack("<b", varList[notchCnt * self.notchContentCnt + perfCnt + i].get())
                 newByteArr.extend(huriko)
 
             index = self.mdlIndexList[trainIdx]
@@ -1098,7 +1101,7 @@ class CSdecrypt():
 
             for i in range(srcNotchNum):
                 if notchCheckStatus:
-                    sound = struct.pack("<c", srcSpeed[2 * srcNotchNum + i].to_bytes(1, 'big'))
+                    sound = struct.pack("<b", srcSpeed[2 * srcNotchNum + i])
                     for n in sound:
                         self.byteArr[index] = n
                         index += 1
@@ -1125,7 +1128,7 @@ class CSdecrypt():
 
             for i in range(2):
                 if perfCheckStatus:
-                    huriko = struct.pack("<c", srcHuriko[i].to_bytes(1, 'big'))
+                    huriko = struct.pack("<b", srcHuriko[i])
                     for n in huriko:
                         self.byteArr[index] = n
                         index += 1
@@ -1479,7 +1482,8 @@ class CSdecrypt():
             for i in range(4):
                 for j in range(notchCnt):
                     if i == 2:
-                        newByteArr.append(speed[i * notchCnt + j])
+                        b = struct.pack("<b", speed[i * notchCnt + j])
+                        newByteArr.extend(b)
                     else:
                         f = struct.pack("<f", speed[i * notchCnt + j])
                         newByteArr.extend(f)
@@ -1491,7 +1495,8 @@ class CSdecrypt():
 
             huriko = self.csvReadInfo["huriko"]
             for i in range(len(huriko)):
-                newByteArr.append(huriko[i])
+                b = struct.pack("<b", huriko[i])
+                newByteArr.extend(b)
 
             trackInfo = self.csvReadInfo["trackInfo"]
             newByteArr.append(len(trackInfo))

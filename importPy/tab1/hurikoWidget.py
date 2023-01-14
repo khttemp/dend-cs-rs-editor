@@ -40,16 +40,15 @@ class HurikoWidget():
         self.hurikoLb["fg"] = color
 
     def editVar(self, labelList, var, value, defaultValue, flag=True):
-        EditHurikoVarInfo(self.root, "値変更", labelList, var, value, defaultValue, flag)
+        EditHurikoVarInfo(self.root, "値変更", labelList, var, value, defaultValue)
 
 
 class EditHurikoVarInfo(sd.Dialog):
-    def __init__(self, master, title, labelList, var, value, defaultValue, flag=False):
+    def __init__(self, master, title, labelList, var, value, defaultValue):
         self.labelList = labelList
         self.var = var
         self.value = value
         self.defaultValue = defaultValue
-        self.flag = flag
         super(EditHurikoVarInfo, self).__init__(parent=master, title=title)
 
     def body(self, frame):
@@ -71,26 +70,13 @@ class EditHurikoVarInfo(sd.Dialog):
         result = self.inputEt.get()
         if result:
             try:
-                if self.flag:
-                    try:
-                        result = int(result)
-                        if result < 0:
-                            errorMsg = "0以上の整数で入力してください。"
-                            mb.showerror(title="整数エラー", message=errorMsg)
-                            return False
-                        self.var.set(result)
-                    except Exception:
-                        errorMsg = "整数で入力してください。"
-                        mb.showerror(title="整数エラー", message=errorMsg)
-                        return False
-                else:
-                    try:
-                        result = float(result)
-                        self.var.set(result)
-                    except Exception:
-                        errorMsg = "数字で入力してください。"
-                        mb.showerror(title="数字エラー", message=errorMsg)
-                        return False
+                try:
+                    result = int(result)
+                    self.var.set(result)
+                except Exception:
+                    errorMsg = "整数で入力してください。"
+                    mb.showerror(title="整数エラー", message=errorMsg)
+                    return False
             except Exception:
                 errorMsg = "予想外のエラーです"
                 mb.showerror(title="エラー", message=errorMsg)

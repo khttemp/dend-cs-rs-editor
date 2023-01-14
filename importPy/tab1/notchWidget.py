@@ -168,10 +168,6 @@ class EditNotchVarInfo(sd.Dialog):
                 if self.flag:
                     try:
                         result = int(result)
-                        if result < 0:
-                            errorMsg = "0以上の整数で入力してください。"
-                            mb.showerror(title="整数エラー", message=errorMsg)
-                            return False
                         self.var.set(result)
                     except Exception:
                         errorMsg = "整数で入力してください。"
