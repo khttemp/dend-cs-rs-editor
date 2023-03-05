@@ -2,6 +2,7 @@
 
 import os
 import codecs
+import sys
 import tkinter
 from tkinter import ttk
 from tkinter import filedialog as fd
@@ -28,7 +29,8 @@ defaultData = []
 
 
 def resource_path(relative_path):
-    return os.path.join(os.path.dirname(__file__), "dendData", relative_path)
+    bundle_dir = getattr(sys, '_MEIPASS', os.path.join(os.path.abspath(os.path.dirname(__file__)), "dendData"))
+    return os.path.join(bundle_dir, relative_path)
 
 
 def defaultDataRead(game):
@@ -233,7 +235,7 @@ def editStageTrain():
 
 
 root = tkinter.Tk()
-root.title("電車でD LBCR 性能改造 1.8.2")
+root.title("電車でD LBCR 性能改造 1.8.3")
 root.geometry("1024x768")
 
 menubar = tkinter.Menu(root)
