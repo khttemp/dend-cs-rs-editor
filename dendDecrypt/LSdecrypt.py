@@ -28,21 +28,21 @@ perfName = [
     "Weight",
     "CompPower",
     "First_break",
-    "未詳",
+    "未詳(未使用)",
     "Second_Breake",
-    "未詳",
-    "未詳",
-    "未詳",
-    "未詳",
-    "未詳",
-    "未詳",
-    "【推測】D_Speed",
+    "未詳(未使用)",
+    "未詳(未使用)",
+    "未詳(未使用)",
+    "SpBreake",
+    "未詳(未使用)",
+    "未詳(未使用)",
+    "D_Speed(未使用)",
     "One_Speed",
     "OutParam",
     "D_Add",
-    "未詳",
-    "未詳",
-    "SpBreake",
+    "未詳(未使用)",
+    "未詳(未使用)",
+    "Carbe",
     "Jump",
     "ChangeFrame",
     "OutRun_Top",
@@ -1126,7 +1126,7 @@ class LSdecrypt():
             cnt += 1
             self.csvReadInfo["mdlNameList"] = mdlNameList
 
-            if csvLines[cnt].strip().split(":")[0] != "COLモデル":
+            if csvLines[cnt].strip().split(",")[0] != "COLモデル":
                 self.error = "COLモデル情報を探せません"
                 return False
 
